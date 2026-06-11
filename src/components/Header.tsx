@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { LogoutButton } from "@/components/LogoutButton";
 import { UserAvatar } from "@/components/UserAvatar";
 import { getCurrentUser } from "@/lib/auth";
 import type { Locale } from "@/i18n/routing";
@@ -65,15 +66,7 @@ export async function Header({ locale }: HeaderProps) {
                 <UserAvatar user={user} size={28} />
                 <span className="max-w-[8rem] truncate text-sm text-white/80">{user.name}</span>
               </Link>
-              <form action="/api/auth/logout" method="POST">
-                <input type="hidden" name="locale" value={locale} />
-                <button
-                  type="submit"
-                  className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white transition hover:bg-white/10"
-                >
-                  {t("logout")}
-                </button>
-              </form>
+              <LogoutButton locale={locale} label={t("logout")} />
             </>
           ) : (
             <Link
