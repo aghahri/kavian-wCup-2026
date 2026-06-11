@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "title": "كافيان | توقعات كأس العالم 2026",
+    "description": "موقع توقع نتائج مباريات كأس العالم 2026 لكافيان وأصدقائه"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "fixtures": "المباريات",
+    "predict": "توقع",
+    "leaderboard": "الترتيب",
+    "tournaments": "البطولات",
+    "admin": "الإدارة",
+    "login": "دخول",
+    "logout": "خروج",
+    "hello": "مرحباً، {name}"
+  },
+  "home": {
+    "welcome": "مرحباً بك في التحدي",
+    "title": "كافيان",
+    "subtitle": "كأس العالم 2026",
+    "description": "توقع المباريات، نافس أصدقاءك، واكتشف من هو أفضل متنبئ في كأس العالم!",
+    "startPredict": "ابدأ التوقع",
+    "viewLeaderboard": "الترتيب",
+    "statMatches": "مباريات",
+    "statPredictions": "توقعات مسجلة",
+    "statLoggedIn": "مسجل: {name}",
+    "statNotLoggedIn": "لم تسجل الدخول بعد",
+    "upcoming": "المباريات القادمة",
+    "allFixtures": "كل المباريات",
+    "topPlayers": "الأفضل",
+    "fullLeaderboard": "الجدول الكامل",
+    "noScores": "لا توجد نقاط بعد",
+    "points": "{count} نقطة"
+  },
+  "fixtures": {
+    "title": "جدول المباريات",
+    "subtitle": "شاهد كل مباريات كأس العالم 2026 وتوقع النتائج",
+    "upcoming": "القادمة",
+    "finished": "المنتهية",
+    "noUpcoming": "لا توجد مباريات قادمة"
+  },
+  "predict": {
+    "title": "توقع المباراة",
+    "subtitle": "سجّل توقعك قبل بداية المباراة",
+    "noOpen": "لا توجد مباريات مفتوحة للتوقع الآن",
+    "viewFixtures": "عرض المباريات",
+    "versus": "ضد",
+    "submit": "تسجيل التوقع",
+    "submitting": "جارٍ التسجيل...",
+    "success": "تم حفظ توقعك بنجاح!",
+    "yourPrediction": "توقعك: {home} - {away}",
+    "pointsEarned": "({points} نقطة)"
+  },
+  "match": {
+    "vs": "VS",
+    "finished": "انتهت",
+    "open": "التوقع مفتوح",
+    "closed": "التوقع مغلق",
+    "predict": "توقع"
+  },
+  "leaderboard": {
+    "title": "جدول الترتيب",
+    "subtitle": "الترتيب حسب مجموع نقاط التوقعات",
+    "rank": "المرتبة",
+    "name": "الاسم",
+    "totalPoints": "المجموع",
+    "exactScores": "دقيق",
+    "finishedMatches": "منتهية",
+    "empty": "لا أحد حصل على نقاط بعد"
+  },
+  "login": {
+    "title": "تسجيل الدخول",
+    "subtitle": "الاسم ورقم الهاتف فقط. يُنشأ حساب جديد في أول زيارة.",
+    "name": "اسمك",
+    "namePlaceholder": "مثال: أحمد",
+    "phone": "رقم الجوال",
+    "phonePlaceholder": "09121234567",
+    "submit": "دخول / تسجيل",
+    "submitting": "جارٍ الدخول...",
+    "adminHint": "المشرف: كافيان — رقم نموذجي 09120000000"
+  },
+  "footer": {
+    "tagline": "صُنع لكافيان — توقعات كأس العالم 2026",
+    "scoring": "نتيجة دقيقة: 5 نقاط | نتيجة صحيحة: 2 نقطة"
+  },
+  "tournaments": {
+    "title": "بطولات التوقع",
+    "subtitle": "انضم لدوريات مجانية أو VIP وتنافس على جوائز برعاية راعٍ",
+    "free": "مجاني",
+    "vip": "VIP",
+    "join": "انضمام",
+    "joined": "منضم",
+    "vipRequired": "يتطلب عضوية VIP",
+    "empty": "لا توجد بطولات نشطة",
+    "prizes": "جوائز برعاية"
+  },
+  "admin": {
+    "title": "لوحة إدارة كافيان",
+    "subtitle": "إدارة المباريات واللغات والبطولات والربح الآمن",
+    "matches": "إدارة المباريات",
+    "matchesDesc": "إضافة وتعديل وإدخال النتائج",
+    "predictions": "عرض التوقعات",
+    "predictionsDesc": "كل توقعات المستخدمين",
+    "languages": "إدارة اللغات",
+    "languagesDesc": "تعديل ترجمات الواجهة",
+    "monetization": "الربح الآمن",
+    "monetizationDesc": "الإعلانات والجوائز وإعدادات الدفع",
+    "tournaments": "البطولات",
+    "tournamentsDesc": "إنشاء دوريات مجانية أو VIP",
+    "recalculate": "تحديث نقاط الترتيب",
+    "recalculating": "جارٍ التحديث...",
+    "recalculateDone": "تم تحديث {count} توقع",
+    "statMatches": "مباريات",
+    "statFinished": "منتهية",
+    "statPredictions": "توقعات",
+    "statUsers": "مستخدمون",
+    "back": "رجوع"
+  },
+  "errors": {
+    "network": "تعذر الاتصال بالخادم",
+    "unauthorized": "يرجى تسجيل الدخول أولاً",
+    "forbidden": "الوصول مرفوض"
+  }
+}

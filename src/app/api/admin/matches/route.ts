@@ -32,7 +32,11 @@ export async function POST(request: Request) {
         awayTeam: String(body.awayTeam ?? "").trim(),
         homeTeamFa: String(body.homeTeamFa ?? "").trim(),
         awayTeamFa: String(body.awayTeamFa ?? "").trim(),
+        homeTeamAr: body.homeTeamAr ? String(body.homeTeamAr).trim() : null,
+        awayTeamAr: body.awayTeamAr ? String(body.awayTeamAr).trim() : null,
         stage: String(body.stage ?? "گروهی").trim(),
+        stageEn: body.stageEn ? String(body.stageEn).trim() : null,
+        stageAr: body.stageAr ? String(body.stageAr).trim() : null,
         kickoffAt: new Date(body.kickoffAt),
       },
     });

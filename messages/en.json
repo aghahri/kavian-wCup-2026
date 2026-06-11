@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "title": "Kavian | World Cup 2026 Predictions",
+    "description": "World Cup 2026 match prediction site for Kavian and friends"
+  },
+  "nav": {
+    "home": "Home",
+    "fixtures": "Fixtures",
+    "predict": "Predict",
+    "leaderboard": "Leaderboard",
+    "tournaments": "Tournaments",
+    "admin": "Admin",
+    "login": "Login",
+    "logout": "Logout",
+    "hello": "Hi, {name}"
+  },
+  "home": {
+    "welcome": "Welcome to the challenge",
+    "title": "Kavian",
+    "subtitle": "World Cup 2026",
+    "description": "Predict matches, compete with friends, and see who is the best World Cup predictor!",
+    "startPredict": "Start predicting",
+    "viewLeaderboard": "Leaderboard",
+    "statMatches": "Matches",
+    "statPredictions": "Predictions made",
+    "statLoggedIn": "Logged in: {name}",
+    "statNotLoggedIn": "Not logged in yet",
+    "upcoming": "Upcoming matches",
+    "allFixtures": "All fixtures",
+    "topPlayers": "Top players",
+    "fullLeaderboard": "Full table",
+    "noScores": "No points scored yet",
+    "points": "{count} pts"
+  },
+  "fixtures": {
+    "title": "Fixtures",
+    "subtitle": "View all World Cup 2026 matches and make predictions",
+    "upcoming": "Upcoming",
+    "finished": "Finished",
+    "noUpcoming": "No upcoming matches"
+  },
+  "predict": {
+    "title": "Match prediction",
+    "subtitle": "Submit your prediction before kickoff",
+    "noOpen": "No matches open for prediction right now",
+    "viewFixtures": "View fixtures",
+    "versus": "vs",
+    "submit": "Submit prediction",
+    "submitting": "Submitting...",
+    "success": "Your prediction was saved!",
+    "yourPrediction": "Your pick: {home} - {away}",
+    "pointsEarned": "({points} pts)"
+  },
+  "match": {
+    "vs": "VS",
+    "finished": "Finished",
+    "open": "Predictions open",
+    "closed": "Predictions closed",
+    "predict": "Predict"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Ranked by total prediction points",
+    "rank": "Rank",
+    "name": "Name",
+    "totalPoints": "Total",
+    "exactScores": "Exact",
+    "finishedMatches": "Played",
+    "empty": "No one has scored yet"
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Just your name and phone. A new account is created on first visit.",
+    "name": "Your name",
+    "namePlaceholder": "e.g. Alex",
+    "phone": "Mobile number",
+    "phonePlaceholder": "09121234567",
+    "submit": "Login / Sign up",
+    "submitting": "Logging in...",
+    "adminHint": "Admin: Kavian — sample phone 09120000000"
+  },
+  "footer": {
+    "tagline": "Built for Kavian — World Cup 2026 predictions",
+    "scoring": "Exact score: 5 pts | Correct result: 2 pts"
+  },
+  "tournaments": {
+    "title": "Prediction tournaments",
+    "subtitle": "Join free or VIP leagues and compete for sponsored prizes",
+    "free": "Free",
+    "vip": "VIP",
+    "join": "Join",
+    "joined": "Joined",
+    "vipRequired": "VIP membership required",
+    "empty": "No active tournaments",
+    "prizes": "Sponsored prizes"
+  },
+  "admin": {
+    "title": "Kavian admin panel",
+    "subtitle": "Manage matches, languages, tournaments, and safe monetization",
+    "matches": "Manage matches",
+    "matchesDesc": "Add, edit, and enter final scores",
+    "predictions": "View predictions",
+    "predictionsDesc": "All user predictions",
+    "languages": "Language management",
+    "languagesDesc": "Edit UI label translations",
+    "monetization": "Safe monetization",
+    "monetizationDesc": "Ads, prizes, and payment settings",
+    "tournaments": "Tournaments",
+    "tournamentsDesc": "Create free or VIP leagues",
+    "recalculate": "Recalculate leaderboard",
+    "recalculating": "Updating...",
+    "recalculateDone": "Updated {count} predictions",
+    "statMatches": "Matches",
+    "statFinished": "Finished",
+    "statPredictions": "Predictions",
+    "statUsers": "Users",
+    "back": "Back"
+  },
+  "errors": {
+    "network": "Could not reach the server",
+    "unauthorized": "Please log in first",
+    "forbidden": "Access denied"
+  }
+}

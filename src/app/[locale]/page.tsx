@@ -1,28 +1,49 @@
 import Link from "next/link";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AdBannerSlot } from "@/components/AdBannerSlot";
 import { MatchCard } from "@/components/MatchCard";
 import { getCurrentUser } from "@/lib/auth";
-import { formatPersianNumber } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
+import { getAwayTeamName, getHomeTeamName, getStageName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
+import type { Locale } from "@/i18n/routing";
 
-export default async function HomePage() {
+type PageProps = {
+  params: Promise<{ locale: Locale }>;
+};
+
+export default async function HomePage({ params }: PageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("home");
   const user = await getCurrentUser();
 
-  const [upcomingMatches, topPlayers, totalPredictions, totalMatches] = await Promise.all([
-    prisma.match.findMany({
-      where: { isFinished: false },
-      orderBy: { kickoffAt: "asc" },
-      take: 3,
-    }),
-    prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        predictions: { select: { points: true } },
-      },
-    }),
-    prisma.prediction.count(),
-    prisma.match.count(),
-  ]);
+  const [upcomingMatches, topPlayers, totalPredictions, totalMatches, ads] =
+    await Promise.all([
+      prisma.match.findMany({
+        where: { isFinished: false },
+        orderBy: { kickoffAt: "asc" },
+        take: 3,
+      }),
+      prisma.user.findMany({
+        select: {
+          id: true,
+          name: true,
+          predictions: { select: { points: true } },
+        },
+      }),
+      prisma.prediction.count(),
+      prisma.match.count(),
+      prisma.adBanner.findMany({
+        where: {
+          isActive: true,
+          placement: "home_top",
+          OR: [{ locale: null }, { locale }],
+        },
+        orderBy: { sortOrder: "asc" },
+        take: 2,
+      }),
+    ]);
 
   const leaderboard = topPlayers
     .map((player) => ({
@@ -35,28 +56,29 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8">
+      <AdBannerSlot ads={ads} />
+
       <section className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-600/30 via-[#0b1f3a] to-[#071526] p-6 shadow-2xl sm:p-10">
-        <p className="mb-2 text-sm font-medium text-emerald-200">به مسابقه خوش آمدید</p>
+        <p className="mb-2 text-sm font-medium text-emerald-200">{t("welcome")}</p>
         <h1 className="text-3xl font-black leading-tight text-white sm:text-5xl">
-          کاویان
-          <span className="block text-emerald-300">جام جهانی ۲۰۲۶</span>
+          {t("title")}
+          <span className="block text-emerald-300">{t("subtitle")}</span>
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
-          بازی‌ها را پیش‌بینی کن، با دوستانت رقابت کن و ببین چه کسی بهترین پیش‌بینی‌کننده
-          جام جهانی است!
+          {t("description")}
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
-            href="/predict"
+            href={`/${locale}/predict`}
             className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-400"
           >
-            شروع پیش‌بینی
+            {t("startPredict")}
           </Link>
           <Link
-            href="/leaderboard"
+            href={`/${locale}/leaderboard`}
             className="rounded-xl border border-white/20 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
           >
-            جدول امتیازات
+            {t("viewLeaderboard")}
           </Link>
         </div>
       </section>
@@ -64,50 +86,60 @@ export default async function HomePage() {
       <section className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
           <p className="text-2xl font-black text-emerald-300">
-            {formatPersianNumber(totalMatches)}
+            {formatNumber(totalMatches, locale)}
           </p>
-          <p className="mt-1 text-sm text-white/70">بازی نمونه</p>
+          <p className="mt-1 text-sm text-white/70">{t("statMatches")}</p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
           <p className="text-2xl font-black text-emerald-300">
-            {formatPersianNumber(totalPredictions)}
+            {formatNumber(totalPredictions, locale)}
           </p>
-          <p className="mt-1 text-sm text-white/70">پیش‌بینی ثبت‌شده</p>
+          <p className="mt-1 text-sm text-white/70">{t("statPredictions")}</p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-          <p className="text-2xl font-black text-emerald-300">
-            {user ? "✓" : "؟"}
-          </p>
+          <p className="text-2xl font-black text-emerald-300">{user ? "✓" : "?"}</p>
           <p className="mt-1 text-sm text-white/70">
-            {user ? `وارد شده: ${user.name}` : "هنوز وارد نشده‌اید"}
+            {user ? t("statLoggedIn", { name: user.name }) : t("statNotLoggedIn")}
           </p>
         </div>
       </section>
 
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">بازی‌های نزدیک</h2>
-          <Link href="/fixtures" className="text-sm text-emerald-300 hover:underline">
-            همه بازی‌ها
+          <h2 className="text-xl font-bold text-white">{t("upcoming")}</h2>
+          <Link href={`/${locale}/fixtures`} className="text-sm text-emerald-300 hover:underline">
+            {t("allFixtures")}
           </Link>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {upcomingMatches.map((match) => (
-            <MatchCard key={match.id} {...match} showPredictLink />
+            <MatchCard
+              key={match.id}
+              id={match.id}
+              homeTeamFa={getHomeTeamName(match, locale)}
+              awayTeamFa={getAwayTeamName(match, locale)}
+              stage={getStageName(match, locale)}
+              kickoffAt={match.kickoffAt}
+              homeScore={match.homeScore}
+              awayScore={match.awayScore}
+              isFinished={match.isFinished}
+              locale={locale}
+              showPredictLink
+            />
           ))}
         </div>
       </section>
 
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">برترین‌ها</h2>
-          <Link href="/leaderboard" className="text-sm text-emerald-300 hover:underline">
-            جدول کامل
+          <h2 className="text-xl font-bold text-white">{t("topPlayers")}</h2>
+          <Link href={`/${locale}/leaderboard`} className="text-sm text-emerald-300 hover:underline">
+            {t("fullLeaderboard")}
           </Link>
         </div>
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
           {leaderboard.length === 0 ? (
-            <p className="p-4 text-center text-sm text-white/60">هنوز امتیازی ثبت نشده</p>
+            <p className="p-4 text-center text-sm text-white/60">{t("noScores")}</p>
           ) : (
             <ul>
               {leaderboard.map((player, index) => (
@@ -117,12 +149,12 @@ export default async function HomePage() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 text-sm font-bold text-emerald-200">
-                      {formatPersianNumber(index + 1)}
+                      {formatNumber(index + 1, locale)}
                     </span>
                     <span className="font-medium text-white">{player.name}</span>
                   </div>
                   <span className="font-bold text-emerald-300">
-                    {formatPersianNumber(player.total)} امتیاز
+                    {t("points", { count: formatNumber(player.total, locale) })}
                   </span>
                 </li>
               ))}

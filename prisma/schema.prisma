@@ -8,27 +8,36 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  name        String
-  phone       String       @unique
-  isAdmin     Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  predictions Prediction[]
+  id                      String                   @id @default(cuid())
+  name                    String
+  phone                   String                   @unique
+  isAdmin                 Boolean                  @default(false)
+  isVip                   Boolean                  @default(false)
+  vipUntil                DateTime?
+  createdAt               DateTime                 @default(now())
+  predictions             Prediction[]
+  tournamentMemberships   TournamentMembership[]
+  tournamentPredictions   TournamentPrediction[]
 }
 
 model Match {
-  id          String       @id @default(cuid())
-  homeTeam    String
-  awayTeam    String
-  homeTeamFa  String
-  awayTeamFa  String
-  stage       String
-  kickoffAt   DateTime
-  homeScore   Int?
-  awayScore   Int?
-  isFinished  Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  predictions Prediction[]
+  id                    String                 @id @default(cuid())
+  homeTeam              String
+  awayTeam              String
+  homeTeamFa            String
+  awayTeamFa            String
+  homeTeamAr            String?
+  awayTeamAr            String?
+  stage                 String
+  stageEn               String?
+  stageAr               String?
+  kickoffAt             DateTime
+  homeScore             Int?
+  awayScore             Int?
+  isFinished            Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  predictions           Prediction[]
+  tournamentPredictions TournamentPrediction[]
 
   @@index([kickoffAt])
 }
@@ -48,4 +57,103 @@ model Prediction {
 
   @@unique([userId, matchId])
   @@index([matchId])
+}
+
+model UiTranslation {
+  id        String   @id @default(cuid())
+  key       String
+  locale    String
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, locale])
+}
+
+model Tournament {
+  id            String                 @id @default(cuid())
+  slug          String                 @unique
+  nameFa        String
+  nameEn        String
+  nameAr        String
+  descriptionFa String?
+  descriptionEn String?
+  descriptionAr String?
+  isVip         Boolean                @default(false)
+  isActive      Boolean                @default(true)
+  startsAt      DateTime?
+  endsAt        DateTime?
+  createdAt     DateTime               @default(now())
+  memberships   TournamentMembership[]
+  predictions   TournamentPrediction[]
+  prizes        Prize[]
+}
+
+model TournamentMembership {
+  id           String     @id @default(cuid())
+  userId       String
+  tournamentId String
+  joinedAt     DateTime   @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tournamentId])
+}
+
+model TournamentPrediction {
+  id           String   @id @default(cuid())
+  userId       String
+  matchId      String
+  tournamentId String
+  homeScore    Int
+  awayScore    Int
+  points       Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match      Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchId, tournamentId])
+  @@index([tournamentId])
+}
+
+model AdBanner {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String?
+  linkUrl   String?
+  placement String
+  locale    String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Prize {
+  id            String      @id @default(cuid())
+  tournamentId  String?
+  titleFa       String
+  titleEn       String
+  titleAr       String
+  sponsorName   String?
+  descriptionFa String?
+  descriptionEn String?
+  descriptionAr String?
+  rankFrom      Int         @default(1)
+  rankTo        Int         @default(1)
+  isActive      Boolean     @default(true)
+  tournament    Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+}
+
+model PaymentSettings {
+  id                 String   @id @default("default")
+  paymentsEnabled    Boolean  @default(false)
+  vipPaymentsEnabled Boolean  @default(false)
+  providerName       String   @default("placeholder")
+  currency           String   @default("IRR")
+  vipPriceLabel      String   @default("VIP League Pass")
+  notes              String?
+  updatedAt          DateTime @updatedAt
 }

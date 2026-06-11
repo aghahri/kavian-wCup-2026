@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { formatPersianDate, isPredictionOpen } from "@/lib/format";
+import { getTranslations } from "next-intl/server";
+import { formatDate, isPredictionOpen } from "@/lib/format";
+import type { Locale } from "@/i18n/routing";
 
 type MatchCardProps = {
   id: string;
@@ -10,11 +12,12 @@ type MatchCardProps = {
   homeScore: number | null;
   awayScore: number | null;
   isFinished: boolean;
+  locale: Locale;
   userPrediction?: { homeScore: number; awayScore: number; points: number } | null;
   showPredictLink?: boolean;
 };
 
-export function MatchCard({
+export async function MatchCard({
   id,
   homeTeamFa,
   awayTeamFa,
@@ -23,9 +26,12 @@ export function MatchCard({
   homeScore,
   awayScore,
   isFinished,
+  locale,
   userPrediction,
   showPredictLink = false,
 }: MatchCardProps) {
+  const t = await getTranslations({ locale, namespace: "match" });
+  const tp = await getTranslations({ locale, namespace: "predict" });
   const open = isPredictionOpen(kickoffAt, isFinished);
 
   return (
@@ -34,7 +40,7 @@ export function MatchCard({
         <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-200">
           {stage}
         </span>
-        <span className="text-xs text-white/60">{formatPersianDate(kickoffAt)}</span>
+        <span className="text-xs text-white/60">{formatDate(kickoffAt, locale)}</span>
       </div>
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
@@ -44,7 +50,7 @@ export function MatchCard({
             <p className="mt-1 text-2xl font-black text-emerald-300">{homeScore}</p>
           )}
         </div>
-        <div className="text-sm font-bold text-white/50">VS</div>
+        <div className="text-sm font-bold text-white/50">{t("vs")}</div>
         <div>
           <p className="text-base font-bold text-white">{awayTeamFa}</p>
           {isFinished && awayScore !== null && (
@@ -55,10 +61,13 @@ export function MatchCard({
 
       {userPrediction && (
         <div className="mt-3 rounded-xl bg-black/20 px-3 py-2 text-center text-sm text-white/80">
-          پیش‌بینی شما: {userPrediction.homeScore} - {userPrediction.awayScore}
+          {tp("yourPrediction", {
+            home: userPrediction.homeScore,
+            away: userPrediction.awayScore,
+          })}
           {isFinished && (
-            <span className="mr-2 text-emerald-300">
-              ({userPrediction.points} امتیاز)
+            <span className="ms-2 text-emerald-300">
+              {tp("pointsEarned", { points: userPrediction.points })}
             </span>
           )}
         </div>
@@ -67,21 +76,17 @@ export function MatchCard({
       <div className="mt-4 flex items-center justify-between gap-2">
         <span
           className={`text-xs font-medium ${
-            isFinished
-              ? "text-white/50"
-              : open
-                ? "text-emerald-300"
-                : "text-amber-300"
+            isFinished ? "text-white/50" : open ? "text-emerald-300" : "text-amber-300"
           }`}
         >
-          {isFinished ? "پایان یافته" : open ? "پیش‌بینی باز است" : "پیش‌بینی بسته شد"}
+          {isFinished ? t("finished") : open ? t("open") : t("closed")}
         </span>
         {showPredictLink && open && (
           <Link
-            href={`/predict?match=${id}`}
+            href={`/${locale}/predict?match=${id}`}
             className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-medium text-white transition hover:bg-emerald-400"
           >
-            پیش‌بینی کن
+            {t("predict")}
           </Link>
         )}
       </div>

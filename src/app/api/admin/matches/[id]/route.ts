@@ -21,7 +21,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       awayTeam?: string;
       homeTeamFa?: string;
       awayTeamFa?: string;
+      homeTeamAr?: string | null;
+      awayTeamAr?: string | null;
       stage?: string;
+      stageEn?: string | null;
+      stageAr?: string | null;
       kickoffAt?: Date;
       homeScore?: number | null;
       awayScore?: number | null;
@@ -32,7 +36,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (body.awayTeam !== undefined) data.awayTeam = String(body.awayTeam).trim();
     if (body.homeTeamFa !== undefined) data.homeTeamFa = String(body.homeTeamFa).trim();
     if (body.awayTeamFa !== undefined) data.awayTeamFa = String(body.awayTeamFa).trim();
+    if (body.homeTeamAr !== undefined) data.homeTeamAr = body.homeTeamAr ? String(body.homeTeamAr).trim() : null;
+    if (body.awayTeamAr !== undefined) data.awayTeamAr = body.awayTeamAr ? String(body.awayTeamAr).trim() : null;
     if (body.stage !== undefined) data.stage = String(body.stage).trim();
+    if (body.stageEn !== undefined) data.stageEn = body.stageEn ? String(body.stageEn).trim() : null;
+    if (body.stageAr !== undefined) data.stageAr = body.stageAr ? String(body.stageAr).trim() : null;
     if (body.kickoffAt !== undefined) data.kickoffAt = new Date(body.kickoffAt);
     if (body.homeScore !== undefined) data.homeScore = body.homeScore === null ? null : Number(body.homeScore);
     if (body.awayScore !== undefined) data.awayScore = body.awayScore === null ? null : Number(body.awayScore);

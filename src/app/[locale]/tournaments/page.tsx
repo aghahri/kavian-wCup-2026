@@ -1,0 +1,54 @@
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { TournamentList } from "@/components/TournamentList";
+import { getCurrentUser } from "@/lib/auth";
+import { getPrizeTitle, getTournamentName } from "@/lib/match-i18n";
+import { prisma } from "@/lib/prisma";
+import { userHasVipAccess } from "@/lib/vip";
+import type { Locale } from "@/i18n/routing";
+
+type PageProps = {
+  params: Promise<{ locale: Locale }>;
+};
+
+export default async function TournamentsPage({ params }: PageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("tournaments");
+  const user = await getCurrentUser();
+
+  const tournaments = await prisma.tournament.findMany({
+    where: { isActive: true },
+    orderBy: { createdAt: "desc" },
+    include: {
+      prizes: { where: { isActive: true } },
+      ...(user ? { memberships: { where: { userId: user.id } } } : {}),
+      _count: { select: { memberships: true } },
+    },
+  });
+
+  const items = tournaments.map((tournament) => ({
+    id: tournament.id,
+    slug: tournament.slug,
+    name: getTournamentName(tournament, locale),
+    isVip: tournament.isVip,
+    memberCount: tournament._count.memberships,
+    joined: "memberships" in tournament && tournament.memberships.length > 0,
+    canJoin: !tournament.isVip || userHasVipAccess(user),
+    prizes: tournament.prizes.map((p) => ({
+      id: p.id,
+      title: getPrizeTitle(p, locale),
+      sponsorName: p.sponsorName,
+    })),
+  }));
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-black text-white sm:text-3xl">{t("title")}</h1>
+        <p className="mt-2 text-sm text-white/70">{t("subtitle")}</p>
+      </div>
+
+      <TournamentList locale={locale} tournaments={items} isLoggedIn={!!user} />
+    </div>
+  );
+}

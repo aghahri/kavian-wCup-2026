@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { ScoreInput } from "@/components/ScoreInput";
-
 type PredictionFormProps = {
   matchId: string;
   homeTeamFa: string;
@@ -21,6 +21,8 @@ export function PredictionForm({
   initialHome,
   initialAway,
 }: PredictionFormProps) {
+  const t = useTranslations("predict");
+  const te = useTranslations("errors");
   const router = useRouter();
   const [homeScore, setHomeScore] = useState(initialHome);
   const [awayScore, setAwayScore] = useState(initialAway);
@@ -43,14 +45,14 @@ export function PredictionForm({
 
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error ?? "خطا در ثبت پیش‌بینی");
+        setError(data.error ?? te("network"));
         return;
       }
 
-      setMessage("پیش‌بینی شما با موفقیت ثبت شد!");
+      setMessage(t("success"));
       router.refresh();
     } catch {
-      setError("ارتباط با سرور برقرار نشد");
+      setError(te("network"));
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,7 @@ export function PredictionForm({
           {stage}
         </span>
         <h2 className="mt-4 text-xl font-bold text-white">
-          {homeTeamFa} <span className="text-white/40">در برابر</span> {awayTeamFa}
+          {homeTeamFa} <span className="text-white/40">{t("versus")}</span> {awayTeamFa}
         </h2>
       </div>
 
@@ -92,7 +94,7 @@ export function PredictionForm({
         disabled={loading}
         className="mt-6 w-full rounded-xl bg-emerald-500 py-3 font-bold text-white transition hover:bg-emerald-400 disabled:opacity-60"
       >
-        {loading ? "در حال ثبت..." : "ثبت پیش‌بینی"}
+        {loading ? t("submitting") : t("submit")}
       </button>
     </form>
   );

@@ -1,7 +1,17 @@
-import { formatPersianNumber } from "@/lib/format";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { formatNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import type { Locale } from "@/i18n/routing";
 
-export default async function LeaderboardPage() {
+type PageProps = {
+  params: Promise<{ locale: Locale }>;
+};
+
+export default async function LeaderboardPage({ params }: PageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("leaderboard");
+
   const users = await prisma.user.findMany({
     select: {
       id: true,
@@ -17,36 +27,28 @@ export default async function LeaderboardPage() {
       const totalPoints = user.predictions.reduce((sum, p) => sum + p.points, 0);
       const finishedPredictions = user.predictions.filter((p) => p.match.isFinished).length;
       const exactScores = user.predictions.filter((p) => p.points === 5).length;
-      return {
-        id: user.id,
-        name: user.name,
-        totalPoints,
-        finishedPredictions,
-        exactScores,
-      };
+      return { id: user.id, name: user.name, totalPoints, finishedPredictions, exactScores };
     })
     .sort((a, b) => b.totalPoints - a.totalPoints || b.exactScores - a.exactScores);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-black text-white sm:text-3xl">جدول امتیازات</h1>
-        <p className="mt-2 text-sm text-white/70">
-          رتبه‌بندی بر اساس مجموع امتیازهای پیش‌بینی‌ها
-        </p>
+        <h1 className="text-2xl font-black text-white sm:text-3xl">{t("title")}</h1>
+        <p className="mt-2 text-sm text-white/70">{t("subtitle")}</p>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
         <div className="hidden grid-cols-[auto_1fr_auto_auto_auto] gap-4 border-b border-white/10 bg-black/20 px-4 py-3 text-xs font-medium text-white/60 sm:grid">
-          <span>رتبه</span>
-          <span>نام</span>
-          <span>امتیاز کل</span>
-          <span>پیش‌بینی دقیق</span>
-          <span>بازی تمام‌شده</span>
+          <span>{t("rank")}</span>
+          <span>{t("name")}</span>
+          <span>{t("totalPoints")}</span>
+          <span>{t("exactScores")}</span>
+          <span>{t("finishedMatches")}</span>
         </div>
 
         {rows.length === 0 ? (
-          <p className="p-6 text-center text-white/60">هنوز کسی امتیازی نگرفته</p>
+          <p className="p-6 text-center text-white/60">{t("empty")}</p>
         ) : (
           <ul>
             {rows.map((row, index) => (
@@ -66,19 +68,19 @@ export default async function LeaderboardPage() {
                             : "bg-white/10 text-white/80"
                     }`}
                   >
-                    {formatPersianNumber(index + 1)}
+                    {formatNumber(index + 1, locale)}
                   </span>
-                  <span className="font-bold text-white sm:order-none">{row.name}</span>
+                  <span className="font-bold text-white">{row.name}</span>
                 </div>
                 <div className="flex flex-wrap gap-3 text-sm sm:contents">
                   <span className="font-black text-emerald-300 sm:text-center">
-                    {formatPersianNumber(row.totalPoints)}
+                    {formatNumber(row.totalPoints, locale)}
                   </span>
                   <span className="text-white/70 sm:text-center">
-                    {formatPersianNumber(row.exactScores)}
+                    {formatNumber(row.exactScores, locale)}
                   </span>
                   <span className="text-white/70 sm:text-center">
-                    {formatPersianNumber(row.finishedPredictions)}
+                    {formatNumber(row.finishedPredictions, locale)}
                   </span>
                 </div>
               </li>

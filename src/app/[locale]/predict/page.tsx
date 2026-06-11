@@ -1,19 +1,25 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PredictionForm } from "@/components/PredictionForm";
 import { getCurrentUser } from "@/lib/auth";
 import { isPredictionOpen } from "@/lib/format";
+import { getAwayTeamName, getHomeTeamName, getStageName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
+import type { Locale } from "@/i18n/routing";
 
-type PredictPageProps = {
+type PageProps = {
+  params: Promise<{ locale: Locale }>;
   searchParams: Promise<{ match?: string }>;
 };
 
-export default async function PredictPage({ searchParams }: PredictPageProps) {
+export default async function PredictPage({ params, searchParams }: PageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("predict");
+
   const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect(`/${locale}/login`);
 
   const { match: selectedMatchId } = await searchParams;
 
@@ -23,29 +29,26 @@ export default async function PredictPage({ searchParams }: PredictPageProps) {
   });
 
   const openMatches = matches.filter((m) => isPredictionOpen(m.kickoffAt, m.isFinished));
-
-  const predictions = await prisma.prediction.findMany({
-    where: { userId: user.id },
-  });
+  const predictions = await prisma.prediction.findMany({ where: { userId: user.id } });
   const predictionMap = new Map(predictions.map((p) => [p.matchId, p]));
-
   const activeMatch =
     openMatches.find((m) => m.id === selectedMatchId) ?? openMatches[0] ?? null;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-black text-white sm:text-3xl">پیش‌بینی بازی</h1>
-        <p className="mt-2 text-sm text-white/70">
-          قبل از شروع بازی پیش‌بینی خود را ثبت کنید
-        </p>
+        <h1 className="text-2xl font-black text-white sm:text-3xl">{t("title")}</h1>
+        <p className="mt-2 text-sm text-white/70">{t("subtitle")}</p>
       </div>
 
       {openMatches.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
-          <p className="text-white/70">الان بازی باز برای پیش‌بینی وجود ندارد</p>
-          <Link href="/fixtures" className="mt-4 inline-block text-emerald-300 hover:underline">
-            مشاهده برنامه بازی‌ها
+          <p className="text-white/70">{t("noOpen")}</p>
+          <Link
+            href={`/${locale}/fixtures`}
+            className="mt-4 inline-block text-emerald-300 hover:underline"
+          >
+            {t("viewFixtures")}
           </Link>
         </div>
       ) : (
@@ -54,14 +57,14 @@ export default async function PredictPage({ searchParams }: PredictPageProps) {
             {openMatches.map((match) => (
               <Link
                 key={match.id}
-                href={`/predict?match=${match.id}`}
+                href={`/${locale}/predict?match=${match.id}`}
                 className={`shrink-0 rounded-xl px-4 py-2 text-sm transition ${
                   activeMatch?.id === match.id
                     ? "bg-emerald-500 text-white"
                     : "bg-white/10 text-white/80 hover:bg-white/15"
                 }`}
               >
-                {match.homeTeamFa} - {match.awayTeamFa}
+                {getHomeTeamName(match, locale)} - {getAwayTeamName(match, locale)}
               </Link>
             ))}
           </div>
@@ -69,9 +72,9 @@ export default async function PredictPage({ searchParams }: PredictPageProps) {
           {activeMatch && (
             <PredictionForm
               matchId={activeMatch.id}
-              homeTeamFa={activeMatch.homeTeamFa}
-              awayTeamFa={activeMatch.awayTeamFa}
-              stage={activeMatch.stage}
+              homeTeamFa={getHomeTeamName(activeMatch, locale)}
+              awayTeamFa={getAwayTeamName(activeMatch, locale)}
+              stage={getStageName(activeMatch, locale)}
               initialHome={predictionMap.get(activeMatch.id)?.homeScore ?? 0}
               initialAway={predictionMap.get(activeMatch.id)?.awayScore ?? 0}
             />

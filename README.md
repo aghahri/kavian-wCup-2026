@@ -1,83 +1,68 @@
 # کاویان — پیش‌بینی جام جهانی ۲۰۲۶
 
-یک وب‌سایت ساده و فارسی (RTL) برای پیش‌بینی بازی‌های جام جهانی ۲۰۲۶، طراحی‌شده برای کاویان (پایه هفتم) تا آن را مدیریت کند.
+Persian-first World Cup 2026 prediction site for Kavian. Supports **fa / en / ar**, RTL/LTR, safe monetization (no gambling).
 
-## امکانات
+## Features
 
-- صفحه اصلی با معرفی و بازی‌های نزدیک
-- برنامه کامل بازی‌ها
-- فرم پیش‌بینی امتیاز
-- جدول امتیازات
-- ورود ساده با نام + شماره موبایل
-- پنل مدیریت برای کاویان (افزودن/ویرایش بازی، ثبت نتیجه، مشاهده پیش‌بینی‌ها)
-- طراحی موبایل‌اول
-- داده نمونه جام جهانی ۲۰۲۶
+- Multi-language UI: `/fa`, `/en`, `/ar`
+- RTL for Persian & Arabic, LTR for English
+- Fixtures, predictions, leaderboard
+- Simple login (name + phone)
+- Admin: matches, predictions, **language overrides**, **tournaments**, **ads & prizes**, **payment settings placeholder**
+- Free & VIP prediction tournaments (skill-based, sponsored prizes only)
+- SQLite + Prisma for MVP
 
-## فناوری‌ها
-
-- Next.js 15 (App Router)
-- TypeScript
-- Tailwind CSS
-- SQLite + Prisma ORM
-
-## راه‌اندازی محلی
+## Local setup
 
 ```bash
-cd kavian-worldcup
 npm install
 cp .env.example .env
 npm run db:setup
 npm run dev
 ```
 
-سایت روی [http://localhost:3000](http://localhost:3000) باز می‌شود.
+Open [http://localhost:3000/fa](http://localhost:3000/fa) (auto-redirects from `/`).
 
-## ورود مدیر (کاویان)
+## Admin login
 
-پس از seed:
+- **Name:** کاویان
+- **Phone:** `09120000000`
 
-- **نام:** کاویان
-- **شماره:** `09120000000`
+## Scoring
 
-## قوانین امتیازدهی
+| Result | Points |
+|--------|--------|
+| Exact score | 5 |
+| Correct outcome | 2 |
+| Wrong | 0 |
 
-| نوع پیش‌بینی | امتیاز |
-|-------------|--------|
-| امتیاز دقیق | ۵ |
-| نتیجه درست (برد/مساوی/باخت) | ۲ |
-| اشتباه | ۰ |
+## Routes
 
-## ساختار پروژه
+| Page | Path |
+|------|------|
+| Home | `/fa`, `/en`, `/ar` |
+| Fixtures | `/{locale}/fixtures` |
+| Predict | `/{locale}/predict` |
+| Leaderboard | `/{locale}/leaderboard` |
+| Tournaments | `/{locale}/tournaments` |
+| Admin | `/{locale}/admin` |
 
-```
-kavian-worldcup/
-├── prisma/           # schema، seed و دیتابیس SQLite
-├── src/
-│   ├── app/          # صفحات و API routes
-│   ├── components/   # کامپوننت‌های UI
-│   └── lib/          # prisma، auth، scoring
-└── README.md
-```
+## Monetization (safe)
 
-## استقرار روی Vercel
+- **VIP tournaments** — membership gate only, no wagering
+- **Sponsored prizes** — rank-based rewards from sponsors
+- **Ad banners** — admin-managed placements
+- **Payment settings** — database placeholder, no real gateway in v1
 
-1. پروژه را در Vercel import کنید (ریشه: `kavian-worldcup`)
-2. متغیرهای محیطی را تنظیم کنید:
-   - `DATABASE_URL` — برای production پیشنهاد می‌شود از [Turso](https://turso.tech) (رایگان) استفاده کنید
-   - `SESSION_SECRET` — یک رشته تصادفی طولانی
-3. Deploy کنید
+## Deploy (Vercel)
 
-> **نکته:** SQLite فایل‌محور روی Vercel Serverless به‌صورت پایدار ذخیره نمی‌شود. برای production روی Vercel از Turso (libSQL) یا استقرار روی Railway/Render با دیسک پایدار استفاده کنید. برای توسعه و دمو محلی، SQLite کافی است.
+Set `DATABASE_URL` and `SESSION_SECRET`. For production persistence on Vercel, use [Turso](https://turso.tech) (free tier) instead of file SQLite.
 
-### دستورات مفید
+## Scripts
 
 ```bash
-npm run db:push    # اعمال schema
-npm run db:seed    # پر کردن داده نمونه
-npm run build      # ساخت production
-npm run lint       # بررسی کد
+npm run dev
+npm run build
+npm run db:setup
+npm run lint
 ```
-
-## مجوز
-
-پروژه آموزشی — آزاد برای استفاده شخصی کاویان و دوستانش.
