@@ -55,9 +55,7 @@ export async function POST(request: Request) {
       const sms = await sendSamantelSms(phone, buildOtpMessage(code));
       customerId = sms.customerId;
       serverId = sms.serverId;
-      providerStatus = sms.called
-        ? `called:yes|${sms.providerStatus}`
-        : `called:no|${sms.providerStatus}`;
+      providerStatus = sms.providerStatus;
 
       if (!sms.ok && !devBypass) {
         await prisma.otpChallenge.create({
@@ -100,7 +98,7 @@ export async function POST(request: Request) {
       ok: true,
       phoneMask: maskPhone(phone),
       expiresInSeconds: OTP_EXPIRY_MS / 1000,
-      smsDispatched: providerStatus.startsWith("called:yes"),
+      smsDispatched: providerStatus.includes("called:yes") && !providerStatus.includes("send_failed"),
     });
   } catch {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 500 });

@@ -12,48 +12,26 @@ export type SamantelSendResult = {
   ok: boolean;
 };
 
-type SamantelMessageResponse = {
-  customerId?: string;
+type SamantelDataItem = {
   serverId?: string | number;
-  status?: string | number;
-  message?: string;
-  error?: string | number;
+  customerId?: string | number;
+  Mobile?: string;
 };
 
 type SamantelApiResponse = {
-  status?: string | number;
+  code?: number;
   message?: string;
-  error?: string | number;
-  messages?: SamantelMessageResponse[];
-  data?: {
-    messages?: SamantelMessageResponse[];
-    status?: string | number;
-  };
-  result?: SamantelMessageResponse | SamantelMessageResponse[];
+  data?: SamantelDataItem[];
 };
 
-function isSuccessStatus(status: string | number | undefined): boolean {
-  if (status === undefined || status === null || status === "") return false;
-  const normalized = String(status).trim().toLowerCase();
-  if (["error", "failed", "false", "0", "-1", "no"].includes(normalized)) {
-    return false;
-  }
-  if (["1", "ok", "success", "sent", "true", "200", "accepted"].includes(normalized)) {
-    return true;
-  }
-  const numeric = Number(status);
-  return Number.isFinite(numeric) && numeric > 0;
-}
-
 function buildProviderStatus(
+  called: boolean,
   httpStatus: number,
-  messageStatus: string | number | undefined,
-  topStatus: string | number | undefined,
+  code: number | undefined,
   serverId: string | null
 ): string {
-  const parts = [`http:${httpStatus}`];
-  if (messageStatus !== undefined) parts.push(`msgStatus:${messageStatus}`);
-  if (topStatus !== undefined) parts.push(`topStatus:${topStatus}`);
+  const parts = [`called:${called ? "yes" : "no"}`, `http:${httpStatus}`];
+  if (code !== undefined) parts.push(`code:${code}`);
   if (serverId) parts.push(`serverId:${serverId}`);
   return parts.join("|");
 }
@@ -86,14 +64,14 @@ export async function sendSamantelSms(
   const username = process.env.SAMANTEL_SMS_USERNAME ?? "";
   const password = process.env.SAMANTEL_SMS_PASSWORD ?? "";
   const sender = process.env.SAMANTEL_SMS_SENDER ?? "";
-  const customerId = randomUUID();
+  const requestCustomerId = randomUUID();
   const recipient = normalizeSmsRecipient(phone);
 
   if (!username || !password || !sender) {
-    const providerStatus = "missing_credentials";
+    const providerStatus = "called:no|missing_credentials";
     const result: SamantelSendResult = {
       called: false,
-      customerId,
+      customerId: requestCustomerId,
       serverId: null,
       providerStatus,
       httpStatus: 0,
@@ -103,7 +81,7 @@ export async function sendSamantelSms(
       recipient: phone,
       httpStatus: 0,
       serverId: null,
-      providerStatus,
+      providerStatus: result.providerStatus,
       ok: false,
       called: false,
     });
@@ -119,7 +97,7 @@ export async function sendSamantelSms(
         sender,
         recipient,
         body,
-        customerId,
+        customerId: requestCustomerId,
       },
     ],
   };
@@ -141,29 +119,39 @@ export async function sendSamantelSms(
     try {
       parsed = JSON.parse(raw) as SamantelApiResponse;
     } catch {
-      parsed = { status: httpStatus, message: raw.slice(0, 200) };
+      const providerStatus = `called:yes|http:${httpStatus}|code:parse_error`;
+      const result: SamantelSendResult = {
+        called: true,
+        customerId: requestCustomerId,
+        serverId: null,
+        providerStatus,
+        httpStatus,
+        ok: false,
+      };
+      logSamantelResult({
+        recipient: phone,
+        httpStatus,
+        serverId: null,
+        providerStatus,
+        ok: false,
+        called: true,
+      });
+      return result;
     }
 
-    const messageResult =
-      parsed.messages?.[0] ??
-      (Array.isArray(parsed.result) ? parsed.result[0] : parsed.result) ??
-      parsed.data?.messages?.[0] ??
-      ({} as SamantelMessageResponse);
-
-    const messageStatus = messageResult.status ?? messageResult.error;
-    const topStatus = parsed.status ?? parsed.error ?? parsed.data?.status;
-    const serverId = messageResult.serverId != null ? String(messageResult.serverId) : null;
+    const first = parsed.data?.[0];
+    const serverId = first?.serverId != null ? String(first.serverId) : null;
+    const customerId =
+      first?.customerId != null ? String(first.customerId) : requestCustomerId;
 
     const ok =
-      isSuccessStatus(messageStatus) ||
-      isSuccessStatus(topStatus) ||
-      (response.ok && Boolean(serverId));
+      httpStatus === 200 && parsed.code === 200 && first?.serverId != null;
 
-    const providerStatus = buildProviderStatus(httpStatus, messageStatus, topStatus, serverId);
+    const providerStatus = buildProviderStatus(true, httpStatus, parsed.code, serverId);
 
     const result: SamantelSendResult = {
       called: true,
-      customerId: messageResult.customerId ?? customerId,
+      customerId,
       serverId,
       providerStatus,
       httpStatus,
@@ -181,10 +169,10 @@ export async function sendSamantelSms(
 
     return result;
   } catch (error) {
-    const providerStatus = `network_error:${error instanceof Error ? error.name : "unknown"}`;
+    const providerStatus = `called:yes|network_error:${error instanceof Error ? error.name : "unknown"}`;
     const result: SamantelSendResult = {
       called: true,
-      customerId,
+      customerId: requestCustomerId,
       serverId: null,
       providerStatus,
       httpStatus: 0,
