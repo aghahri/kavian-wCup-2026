@@ -23,15 +23,41 @@ export type SendSamantelSmsParams = {
 
 type SamantelDataItem = {
   serverId?: string | number;
+  ServerId?: string | number;
   customerId?: string | number;
+  CustomerId?: string | number;
   Mobile?: string;
 };
 
 type SamantelApiResponse = {
-  code?: number;
+  code?: number | string;
   message?: string;
-  data?: SamantelDataItem[];
+  data?: SamantelDataItem[] | SamantelDataItem;
 };
+
+function normalizeDataArray(data: SamantelApiResponse["data"]): SamantelDataItem[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") return [data];
+  return [];
+}
+
+function readServerId(item: SamantelDataItem | undefined): string | null {
+  if (!item) return null;
+  const rawServerId = item.serverId ?? item.ServerId;
+  return rawServerId == null ? null : String(rawServerId);
+}
+
+function readCustomerId(item: SamantelDataItem | undefined): string | null {
+  if (!item) return null;
+  const raw = item.customerId ?? item.CustomerId;
+  return raw == null ? null : String(raw);
+}
+
+function normalizeParsedCode(code: number | string | undefined): number | undefined {
+  if (code === undefined || code === null || code === "") return undefined;
+  const numeric = Number(code);
+  return Number.isFinite(numeric) ? numeric : undefined;
+}
 
 function buildProviderStatus(
   called: boolean,
@@ -178,15 +204,16 @@ export async function sendSamantelSms(
       return result;
     }
 
-    const dataLength = parsed.data?.length ?? 0;
-    const first = parsed.data?.[0];
-    const serverId = first?.serverId != null ? String(first.serverId) : null;
-    const customerId =
-      first?.customerId != null ? String(first.customerId) : requestCustomerId;
+    const dataItems = normalizeDataArray(parsed.data);
+    const dataLength = dataItems.length;
+    const first = dataItems[0];
+    const serverId = readServerId(first);
+    const customerId = readCustomerId(first) ?? requestCustomerId;
+    const parsedCode = normalizeParsedCode(parsed.code);
 
-    const ok = httpStatus === 200 && parsed.code === 200 && first?.serverId != null;
+    const ok = httpStatus === 200 && parsedCode === 200 && !!serverId;
 
-    const providerStatus = buildProviderStatus(true, httpStatus, parsed.code, serverId);
+    const providerStatus = buildProviderStatus(true, httpStatus, parsedCode, serverId);
 
     const result: SamantelSendResult = {
       called: true,
@@ -201,7 +228,7 @@ export async function sendSamantelSms(
       inputPhone,
       recipient,
       httpStatus,
-      parsedCode: parsed.code,
+      parsedCode,
       parsedDataLength: dataLength,
       serverId,
       providerStatus,
