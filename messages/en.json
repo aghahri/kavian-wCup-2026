@@ -70,14 +70,19 @@
   },
   "login": {
     "title": "Login",
-    "subtitle": "Just your name and phone. A new account is created on first visit.",
+    "subtitlePhone": "Enter your mobile number. We will send a verification code by SMS.",
+    "subtitleOtp": "Enter the code sent to {phone}.",
     "name": "Your name",
     "namePlaceholder": "e.g. Alex",
     "phone": "Mobile number",
     "phonePlaceholder": "09121234567",
-    "submit": "Login / Sign up",
-    "submitting": "Logging in...",
-    "adminHint": "Admin: Kavian — sample phone 09120000000"
+    "otpCode": "Verification code",
+    "sendOtp": "Send code",
+    "sendingOtp": "Sending...",
+    "verifyOtp": "Verify & login",
+    "verifying": "Verifying...",
+    "changePhone": "Change phone number",
+    "adminHint": "Admin: Kavian — 09120000000 | Dev mode code: 123456"
   },
   "footer": {
     "tagline": "Built for Kavian — World Cup 2026 predictions",

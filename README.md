@@ -7,7 +7,7 @@ Persian-first World Cup 2026 prediction site for Kavian. Supports **fa / en / ar
 - Multi-language UI: `/fa`, `/en`, `/ar`
 - RTL for Persian & Arabic, LTR for English
 - Fixtures, predictions, leaderboard
-- Simple login (name + phone)
+- SMS OTP login via Samantel (phone verification)
 - Admin: matches, predictions, **language overrides**, **tournaments**, **ads & prizes**, **payment settings placeholder**
 - Free & VIP prediction tournaments (skill-based, sponsored prizes only)
 - SQLite + Prisma for MVP
@@ -25,8 +25,18 @@ Open [http://localhost:3000/fa](http://localhost:3000/fa) (auto-redirects from `
 
 ## Admin login
 
-- **Name:** کاویان
-- **Phone:** `09120000000`
+- **Phone:** `09120000000` (OTP via SMS)
+- **Local dev:** set `OTP_DEV_BYPASS=true` and use code `123456`
+
+## OTP environment variables
+
+```env
+SAMANTEL_SMS_USERNAME=
+SAMANTEL_SMS_PASSWORD=
+SAMANTEL_SMS_SENDER=
+OTP_ENABLED=true
+OTP_DEV_BYPASS=false
+```
 
 ## Scoring
 

@@ -20,6 +20,22 @@ model User {
   tournamentPredictions   TournamentPrediction[]
 }
 
+model OtpChallenge {
+  id             String    @id @default(cuid())
+  phone          String
+  codeHash       String
+  expiresAt      DateTime
+  attempts       Int       @default(0)
+  usedAt         DateTime?
+  customerId     String?
+  serverId       String?
+  providerStatus String?
+  createdAt      DateTime  @default(now())
+
+  @@index([phone, createdAt])
+  @@index([expiresAt])
+}
+
 model Match {
   id                    String                 @id @default(cuid())
   homeTeam              String

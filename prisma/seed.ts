@@ -126,6 +126,7 @@ const matches = [
 ];
 
 async function main() {
+  await prisma.otpChallenge.deleteMany();
   await prisma.tournamentPrediction.deleteMany();
   await prisma.tournamentMembership.deleteMany();
   await prisma.prize.deleteMany();
