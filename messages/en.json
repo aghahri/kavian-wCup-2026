@@ -119,7 +119,16 @@
     "statFinished": "Finished",
     "statPredictions": "Predictions",
     "statUsers": "Users",
-    "back": "Back"
+    "back": "Back",
+    "otp": "OTP / SMS log",
+    "otpDesc": "Samantel dispatch status for each OTP request",
+    "otpPhone": "Phone",
+    "otpCreated": "Created",
+    "otpExpires": "Expires",
+    "otpProviderStatus": "Provider status",
+    "otpServerId": "serverId",
+    "otpAttempts": "Attempts",
+    "otpEmpty": "No OTP requests yet"
   },
   "errors": {
     "network": "Could not reach the server",

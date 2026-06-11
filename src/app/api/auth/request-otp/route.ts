@@ -40,28 +40,44 @@ export async function POST(request: Request) {
     const codeHash = await hashOtpCode(code);
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
-    let customerId: string | null = null;
-    let serverId: string | null = null;
-    let providerStatus: string | null = null;
-
     const otpActive = isOtpEnabled();
     const devBypass = isOtpDevBypass();
 
-    if (otpActive && !devBypass) {
+    if (!otpActive && !devBypass) {
+      return NextResponse.json({ error: GENERIC_ERROR }, { status: 503 });
+    }
+
+    let customerId: string | null = null;
+    let serverId: string | null = null;
+    let providerStatus: string;
+
+    if (otpActive) {
       const sms = await sendSamantelSms(phone, buildOtpMessage(code));
       customerId = sms.customerId;
       serverId = sms.serverId;
-      providerStatus = sms.providerStatus;
+      providerStatus = sms.called
+        ? `called:yes|${sms.providerStatus}`
+        : `called:no|${sms.providerStatus}`;
 
-      if (!sms.ok) {
+      if (!sms.ok && !devBypass) {
+        await prisma.otpChallenge.create({
+          data: {
+            phone,
+            codeHash,
+            expiresAt,
+            customerId,
+            serverId,
+            providerStatus: `${providerStatus}|send_failed`,
+          },
+        });
         return NextResponse.json({ error: GENERIC_ERROR }, { status: 502 });
       }
-    } else if (otpActive && devBypass) {
-      providerStatus = "dev_bypass";
-    } else if (!otpActive && devBypass) {
-      providerStatus = "dev_bypass";
+
+      if (!sms.ok && devBypass) {
+        providerStatus = `${providerStatus}|verify_dev_bypass_only`;
+      }
     } else {
-      return NextResponse.json({ error: GENERIC_ERROR }, { status: 503 });
+      providerStatus = "called:no|otp_disabled_dev_bypass";
     }
 
     await prisma.otpChallenge.updateMany({
@@ -84,6 +100,7 @@ export async function POST(request: Request) {
       ok: true,
       phoneMask: maskPhone(phone),
       expiresInSeconds: OTP_EXPIRY_MS / 1000,
+      smsDispatched: providerStatus.startsWith("called:yes"),
     });
   } catch {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 500 });

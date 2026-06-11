@@ -119,7 +119,16 @@
     "statFinished": "پایان‌یافته",
     "statPredictions": "پیش‌بینی‌ها",
     "statUsers": "کاربران",
-    "back": "بازگشت"
+    "back": "بازگشت",
+    "otp": "لاگ OTP / پیامک",
+    "otpDesc": "وضعیت ارسال پیامک سامانتل برای هر درخواست OTP",
+    "otpPhone": "شماره",
+    "otpCreated": "ایجاد",
+    "otpExpires": "انقضا",
+    "otpProviderStatus": "وضعیت سرویس",
+    "otpServerId": "serverId",
+    "otpAttempts": "تلاش",
+    "otpEmpty": "هنوز درخواست OTP ثبت نشده"
   },
   "errors": {
     "network": "ارتباط با سرور برقرار نشد",

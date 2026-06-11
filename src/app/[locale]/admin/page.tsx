@@ -33,6 +33,7 @@ export default async function AdminPage({ params }: PageProps) {
     { href: `/${locale}/admin/languages`, title: t("languages"), desc: t("languagesDesc") },
     { href: `/${locale}/admin/monetization`, title: t("monetization"), desc: t("monetizationDesc") },
     { href: `/${locale}/admin/tournaments`, title: t("tournaments"), desc: t("tournamentsDesc") },
+    { href: `/${locale}/admin/otp`, title: t("otp"), desc: t("otpDesc") },
   ];
 
   return (

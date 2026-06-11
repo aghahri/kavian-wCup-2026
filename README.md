@@ -26,7 +26,8 @@ Open [http://localhost:3000/fa](http://localhost:3000/fa) (auto-redirects from `
 ## Admin login
 
 - **Phone:** `09120000000` (OTP via SMS)
-- **Local dev:** set `OTP_DEV_BYPASS=true` and use code `123456`
+- **Local dev:** set `OTP_DEV_BYPASS=true` and use code `123456` (bypass affects **verify only**; SMS is still sent when `OTP_ENABLED=true`)
+- **Debug SMS:** open `/{locale}/admin/otp` to inspect `providerStatus` and `serverId`
 
 ## OTP environment variables
 
