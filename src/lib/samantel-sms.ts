@@ -1,8 +1,17 @@
 import { randomUUID } from "crypto";
-import { maskPhone, maskSmsRecipient } from "@/lib/phone";
+import { maskPhone, maskSmsRecipient, normalizeSmsRecipient } from "@/lib/phone";
 
 const SAMANTEL_URL = "https://sms.samantel.ir/services/rest/index.php";
 const SMS_RECIPIENT_PATTERN = /^98\d{10}$/;
+
+const SERVER_ID_KEYS = [
+  "serverId",
+  "serverid",
+  "ServerId",
+  "ServerID",
+  "server_id",
+  "id",
+] as const;
 
 export type SamantelSendResult = {
   called: boolean;
@@ -21,42 +30,93 @@ export type SendSamantelSmsParams = {
   body: string;
 };
 
-type SamantelDataItem = {
-  serverId?: string | number;
-  ServerId?: string | number;
-  customerId?: string | number;
-  CustomerId?: string | number;
-  Mobile?: string;
-};
-
 type SamantelApiResponse = {
   code?: number | string;
   message?: string;
-  data?: SamantelDataItem[] | SamantelDataItem;
+  data?: unknown;
 };
 
-function normalizeDataArray(data: SamantelApiResponse["data"]): SamantelDataItem[] {
+function normalizeDataArray(data: unknown): unknown[] {
   if (Array.isArray(data)) return data;
-  if (data && typeof data === "object") return [data];
+  if (data && typeof data === "object") {
+    const record = data as Record<string, unknown>;
+    const values = Object.values(record);
+    if (readServerId(data) !== null) return [data];
+    if (values.length > 0 && values.every((v) => v && typeof v === "object")) {
+      return values;
+    }
+    return [data];
+  }
   return [];
 }
 
-function readServerId(item: SamantelDataItem | undefined): string | null {
-  if (!item) return null;
-  const rawServerId = item.serverId ?? item.ServerId;
-  return rawServerId == null ? null : String(rawServerId);
+export function readServerId(item: unknown): string | null {
+  if (!item || typeof item !== "object") return null;
+  const record = item as Record<string, unknown>;
+
+  for (const key of SERVER_ID_KEYS) {
+    const value = record[key];
+    if (value != null && value !== "") {
+      return String(value);
+    }
+  }
+
+  for (const [key, value] of Object.entries(record)) {
+    if (
+      SERVER_ID_KEYS.some((candidate) => candidate.toLowerCase() === key.toLowerCase()) &&
+      value != null &&
+      value !== ""
+    ) {
+      return String(value);
+    }
+  }
+
+  return null;
 }
 
-function readCustomerId(item: SamantelDataItem | undefined): string | null {
-  if (!item) return null;
-  const raw = item.customerId ?? item.CustomerId;
-  return raw == null ? null : String(raw);
+function readCustomerId(item: unknown): string | null {
+  if (!item || typeof item !== "object") return null;
+  const record = item as Record<string, unknown>;
+  const raw = record.customerId ?? record.CustomerId ?? record.customer_id;
+  return raw == null || raw === "" ? null : String(raw);
 }
 
 function normalizeParsedCode(code: number | string | undefined): number | undefined {
   if (code === undefined || code === null || code === "") return undefined;
   const numeric = Number(code);
   return Number.isFinite(numeric) ? numeric : undefined;
+}
+
+function sanitizeDataValue(key: string, value: unknown): unknown {
+  const lower = key.toLowerCase();
+  if (lower === "password" || lower === "username" || lower === "body") {
+    return "[redacted]";
+  }
+  if (
+    typeof value === "string" &&
+    (lower.includes("mobile") || lower.includes("phone") || lower.includes("recipient"))
+  ) {
+    const digits = value.replace(/\D/g, "");
+    if (digits.length >= 10) {
+      return digits.startsWith("98")
+        ? maskSmsRecipient(digits)
+        : maskPhone(value);
+    }
+  }
+  return value;
+}
+
+function sanitizeDataPreview(first: unknown): string | null {
+  if (!first || typeof first !== "object") return null;
+  try {
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(first as Record<string, unknown>)) {
+      sanitized[key] = sanitizeDataValue(key, value);
+    }
+    return JSON.stringify(sanitized).slice(0, 300);
+  } catch {
+    return null;
+  }
 }
 
 function buildProviderStatus(
@@ -77,6 +137,8 @@ export function logSamantelResult(input: {
   httpStatus: number;
   parsedCode?: number;
   parsedDataLength?: number;
+  dataKeys?: string[];
+  dataPreview?: string | null;
   serverId: string | null;
   providerStatus: string;
   ok: boolean;
@@ -91,6 +153,8 @@ export function logSamantelResult(input: {
       httpStatus: input.httpStatus,
       parsedCode: input.parsedCode ?? null,
       parsedDataLength: input.parsedDataLength ?? 0,
+      dataKeys: input.dataKeys ?? [],
+      dataPreview: input.dataPreview ?? null,
       serverId: input.serverId,
       providerStatus: input.providerStatus,
       ok: input.ok,
@@ -204,9 +268,12 @@ export async function sendSamantelSms(
       return result;
     }
 
-    const dataItems = normalizeDataArray(parsed.data);
-    const dataLength = dataItems.length;
-    const first = dataItems[0];
+    const dataArray = normalizeDataArray(parsed.data);
+    const dataLength = dataArray.length;
+    const first = dataArray[0];
+    const dataKeys =
+      first && typeof first === "object" ? Object.keys(first as Record<string, unknown>) : [];
+    const dataPreview = sanitizeDataPreview(first);
     const serverId = readServerId(first);
     const customerId = readCustomerId(first) ?? requestCustomerId;
     const parsedCode = normalizeParsedCode(parsed.code);
@@ -230,6 +297,8 @@ export async function sendSamantelSms(
       httpStatus,
       parsedCode,
       parsedDataLength: dataLength,
+      dataKeys,
+      dataPreview,
       serverId,
       providerStatus,
       ok,
