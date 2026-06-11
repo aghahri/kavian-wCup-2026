@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isPredictionOpen } from "@/lib/format";
 import { getAwayTeamName, getHomeTeamName, getStageName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
+import { getSiteUrl } from "@/lib/share";
 import type { Locale } from "@/i18n/routing";
 
 type PageProps = {
@@ -17,6 +18,7 @@ export default async function PredictPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("predict");
+  const ts = await getTranslations("share");
 
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
@@ -77,6 +79,15 @@ export default async function PredictPage({ params, searchParams }: PageProps) {
               stage={getStageName(activeMatch, locale)}
               initialHome={predictionMap.get(activeMatch.id)?.homeScore ?? 0}
               initialAway={predictionMap.get(activeMatch.id)?.awayScore ?? 0}
+              shareText={t("shareText")}
+              shareUrl={`${getSiteUrl()}/${locale}/predict`}
+              shareLabels={{
+                share: ts("title"),
+                telegram: ts("telegram"),
+                whatsapp: ts("whatsapp"),
+                x: ts("x"),
+                facebook: ts("facebook"),
+              }}
             />
           )}
         </>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { UserAvatar } from "@/components/UserAvatar";
 import { getCurrentUser } from "@/lib/auth";
 import type { Locale } from "@/i18n/routing";
 
@@ -57,9 +58,13 @@ export async function Header({ locale }: HeaderProps) {
           <LanguageSwitcher locale={locale} />
           {user ? (
             <>
-              <span className="hidden text-sm text-white/80 md:inline">
-                {t("hello", { name: user.name })}
-              </span>
+              <Link
+                href={`/${locale}/profile`}
+                className="hidden items-center gap-2 rounded-lg px-2 py-1 transition hover:bg-white/10 md:flex"
+              >
+                <UserAvatar user={user} size={28} />
+                <span className="max-w-[8rem] truncate text-sm text-white/80">{user.name}</span>
+              </Link>
               <form action="/api/auth/logout" method="POST">
                 <input type="hidden" name="locale" value={locale} />
                 <button
@@ -91,6 +96,14 @@ export async function Header({ locale }: HeaderProps) {
             {link.label}
           </Link>
         ))}
+        {user && (
+          <Link
+            href={`/${locale}/profile`}
+            className="shrink-0 rounded-lg bg-white/5 px-3 py-2 text-xs text-white/90"
+          >
+            {t("profile")}
+          </Link>
+        )}
         {user?.isAdmin && (
           <Link
             href={`/${locale}/admin`}

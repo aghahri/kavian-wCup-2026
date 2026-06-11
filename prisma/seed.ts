@@ -1,6 +1,11 @@
 import { PrismaClient } from "@prisma/client";
+import { randomBytes } from "crypto";
 
 const prisma = new PrismaClient();
+
+function referralCode(): string {
+  return randomBytes(4).toString("hex");
+}
 
 const matches = [
   {
@@ -126,6 +131,8 @@ const matches = [
 ];
 
 async function main() {
+  await prisma.userBadge.deleteMany();
+  await prisma.referralClick.deleteMany();
   await prisma.otpChallenge.deleteMany();
   await prisma.tournamentPrediction.deleteMany();
   await prisma.tournamentMembership.deleteMany();
@@ -144,14 +151,15 @@ async function main() {
       phone: "09120000000",
       isAdmin: true,
       isVip: true,
+      referralCode: referralCode(),
     },
   });
 
   await prisma.user.createMany({
     data: [
-      { name: "علی", phone: "09121111111" },
-      { name: "Sara", phone: "09122222222" },
-      { name: "رضا", phone: "09123333333" },
+      { name: "علی", phone: "09121111111", referralCode: referralCode() },
+      { name: "Sara", phone: "09122222222", referralCode: referralCode() },
+      { name: "رضا", phone: "09123333333", referralCode: referralCode() },
     ],
   });
 

@@ -5,6 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { routing, isRtl, type Locale } from "@/i18n/routing";
 import "../globals.css";
 
@@ -35,6 +36,16 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   return {
     title: t("title"),
     description: t("description"),
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: "KavianFootball",
+    },
+    icons: {
+      icon: "/icons/icon-192.png",
+      apple: "/icons/icon-512.png",
+    },
   };
 }
 
@@ -54,6 +65,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
     <html lang={locale} dir={rtl ? "rtl" : "ltr"}>
       <body className={`${fontClass} font-sans antialiased`}>
         <NextIntlClientProvider messages={messages}>
+          <ServiceWorkerRegister />
           <div className="flex min-h-screen flex-col">
             <Header locale={locale as Locale} />
             <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>

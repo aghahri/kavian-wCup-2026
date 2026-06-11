@@ -1,5 +1,8 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { EmptyState } from "@/components/EmptyState";
 import { MatchCard } from "@/components/MatchCard";
+import { ShareButtons } from "@/components/ShareButtons";
+import { getSiteUrl } from "@/lib/share";
 import { getCurrentUser } from "@/lib/auth";
 import { getAwayTeamName, getHomeTeamName, getStageName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +16,7 @@ export default async function FixturesPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("fixtures");
+  const ts = await getTranslations("share");
   const user = await getCurrentUser();
 
   const matches = await prisma.match.findMany({
@@ -29,23 +33,36 @@ export default async function FixturesPage({ params }: PageProps) {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-black text-white sm:text-3xl">{t("title")}</h1>
-        <p className="mt-2 text-sm text-white/70">{t("subtitle")}</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-white sm:text-3xl">{t("title")}</h1>
+          <p className="mt-2 text-sm text-white/70">{t("subtitle")}</p>
+        </div>
+        <ShareButtons
+          text={t("shareText")}
+          url={`${getSiteUrl()}/${locale}/fixtures`}
+          labels={{
+            share: ts("title"),
+            telegram: ts("telegram"),
+            whatsapp: ts("whatsapp"),
+            x: ts("x"),
+            facebook: ts("facebook"),
+          }}
+        />
       </div>
 
       <section>
         <h2 className="mb-4 text-lg font-bold text-emerald-300">{t("upcoming")}</h2>
         {upcoming.length === 0 ? (
-          <p className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/60">
-            {t("noUpcoming")}
-          </p>
+          <EmptyState icon="📅" title={t("noUpcoming")} />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {upcoming.map((match) => (
               <MatchCard
                 key={match.id}
                 id={match.id}
+                homeTeam={match.homeTeam}
+                awayTeam={match.awayTeam}
                 homeTeamFa={getHomeTeamName(match, locale)}
                 awayTeamFa={getAwayTeamName(match, locale)}
                 stage={getStageName(match, locale)}
@@ -70,6 +87,8 @@ export default async function FixturesPage({ params }: PageProps) {
               <MatchCard
                 key={match.id}
                 id={match.id}
+                homeTeam={match.homeTeam}
+                awayTeam={match.awayTeam}
                 homeTeamFa={getHomeTeamName(match, locale)}
                 awayTeamFa={getAwayTeamName(match, locale)}
                 stage={getStageName(match, locale)}

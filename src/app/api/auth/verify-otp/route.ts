@@ -7,6 +7,10 @@ import {
   verifyOtpCode,
 } from "@/lib/otp";
 import { prisma } from "@/lib/prisma";
+import {
+  attachReferralToNewUser,
+  generateReferralCode,
+} from "@/lib/referral";
 import { setSessionUserId } from "@/lib/session";
 
 const GENERIC_ERROR = "تأیید ناموفق بود. لطفاً دوباره تلاش کنید.";
@@ -152,11 +156,23 @@ export async function POST(request: Request) {
       },
     });
 
+    const isNewUser = !existingUser;
     const user = await prisma.user.upsert({
       where: { phone },
       update: existingUser ? {} : { name },
-      create: { phone, name },
+      create: { phone, name, referralCode: generateReferralCode() },
     });
+
+    if (!user.referralCode) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { referralCode: generateReferralCode() },
+      });
+    }
+
+    if (isNewUser) {
+      await attachReferralToNewUser(user.id);
+    }
 
     await setSessionUserId(user.id);
 

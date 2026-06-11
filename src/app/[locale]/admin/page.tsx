@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { RecalculateButton } from "@/components/RecalculateButton";
+import { getAdminDashboardStats } from "@/lib/admin-stats";
 import { getCurrentUser } from "@/lib/auth";
 import { formatNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -20,7 +21,8 @@ export default async function AdminPage({ params }: PageProps) {
   if (!user) redirect(`/${locale}/login`);
   if (!user.isAdmin) redirect(`/${locale}`);
 
-  const [matchCount, predictionCount, userCount, finishedCount] = await Promise.all([
+  const [stats, matchCount, predictionCount, userCount, finishedCount] = await Promise.all([
+    getAdminDashboardStats(),
     prisma.match.count(),
     prisma.prediction.count(),
     prisma.user.count(),
@@ -34,6 +36,21 @@ export default async function AdminPage({ params }: PageProps) {
     { href: `/${locale}/admin/monetization`, title: t("monetization"), desc: t("monetizationDesc") },
     { href: `/${locale}/admin/tournaments`, title: t("tournaments"), desc: t("tournamentsDesc") },
     { href: `/${locale}/admin/otp`, title: t("otp"), desc: t("otpDesc") },
+    { href: `/${locale}/admin/referrals`, title: t("referrals"), desc: t("referralsDesc") },
+  ];
+
+  const v2Stats = [
+    { label: t("statUsersToday"), value: stats.usersToday },
+    { label: t("statUsers7d"), value: stats.users7d },
+    { label: t("statOtpToday"), value: stats.otpRequestsToday },
+    { label: t("statOtpSuccess"), value: `${stats.otpSuccessRate}%` },
+    { label: t("statActiveTournaments"), value: stats.activeTournaments },
+    { label: t("statPredictionsToday"), value: stats.predictionsToday },
+    { label: t("statReferralRegs"), value: stats.referralRegistrations },
+    { label: t("statMatches"), value: matchCount },
+    { label: t("statFinished"), value: finishedCount },
+    { label: t("statPredictions"), value: predictionCount },
+    { label: t("statUsers"), value: userCount },
   ];
 
   return (
@@ -44,23 +61,36 @@ export default async function AdminPage({ params }: PageProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: t("statMatches"), value: matchCount },
-          { label: t("statFinished"), value: finishedCount },
-          { label: t("statPredictions"), value: predictionCount },
-          { label: t("statUsers"), value: userCount },
-        ].map((item) => (
+        {v2Stats.map((item) => (
           <div
             key={item.label}
             className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center"
           >
             <p className="text-2xl font-black text-emerald-300">
-              {formatNumber(item.value, locale)}
+              {typeof item.value === "number" ? formatNumber(item.value, locale) : item.value}
             </p>
             <p className="mt-1 text-sm text-white/70">{item.label}</p>
           </div>
         ))}
       </div>
+
+      {stats.topInviters.length > 0 && (
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <h2 className="text-lg font-bold text-white">{t("topInviters")}</h2>
+          <ul className="mt-3 space-y-2">
+            {stats.topInviters.map((inviter, i) => (
+              <li key={inviter.id} className="flex items-center justify-between text-sm">
+                <span className="text-white">
+                  {formatNumber(i + 1, locale)}. {inviter.name}
+                </span>
+                <span className="text-emerald-300">
+                  {formatNumber(inviter._count.referrals, locale)} {t("referralsCount")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         {cards.map((card) => (

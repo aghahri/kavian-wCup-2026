@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { ScoreInput } from "@/components/ScoreInput";
+import { ShareButtons } from "@/components/ShareButtons";
+
 type PredictionFormProps = {
   matchId: string;
   homeTeamFa: string;
@@ -11,6 +13,15 @@ type PredictionFormProps = {
   stage: string;
   initialHome: number;
   initialAway: number;
+  shareText?: string;
+  shareUrl?: string;
+  shareLabels?: {
+    share: string;
+    telegram: string;
+    whatsapp: string;
+    x: string;
+    facebook: string;
+  };
 };
 
 export function PredictionForm({
@@ -20,6 +31,9 @@ export function PredictionForm({
   stage,
   initialHome,
   initialAway,
+  shareText,
+  shareUrl,
+  shareLabels,
 }: PredictionFormProps) {
   const t = useTranslations("predict");
   const te = useTranslations("errors");
@@ -84,9 +98,14 @@ export function PredictionForm({
         </p>
       )}
       {message && (
-        <p className="mt-4 rounded-xl bg-emerald-500/20 px-4 py-3 text-center text-sm text-emerald-200">
-          {message}
-        </p>
+        <div className="mt-4 space-y-3">
+          <p className="rounded-xl bg-emerald-500/20 px-4 py-3 text-center text-sm text-emerald-200">
+            {message}
+          </p>
+          {shareText && shareUrl && shareLabels && (
+            <ShareButtons text={shareText} url={shareUrl} labels={shareLabels} />
+          )}
+        </div>
       )}
 
       <button
