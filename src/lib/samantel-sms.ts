@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { maskPhone, maskSmsRecipient, normalizeSmsRecipient } from "@/lib/phone";
+import { maskPhone, maskSmsRecipient } from "@/lib/phone";
 
 const SAMANTEL_URL = "https://sms.samantel.ir/services/rest/index.php";
 const SMS_RECIPIENT_PATTERN = /^98\d{10}$/;
