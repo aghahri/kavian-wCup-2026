@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { maskPhone, isValidIranMobile, normalizePhone } from "@/lib/phone";
+import {
+  maskPhone,
+  isValidIranMobile,
+  isValidSmsRecipient,
+  normalizePhone,
+  normalizeSmsRecipient,
+} from "@/lib/phone";
 import {
   OTP_REQUEST_COOLDOWN_MS,
   buildOtpMessage,
@@ -18,8 +24,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const phone = normalizePhone(String(body.phone ?? ""));
+    const smsRecipient = normalizeSmsRecipient(phone);
 
-    if (!isValidIranMobile(phone)) {
+    if (!isValidIranMobile(phone) || !isValidSmsRecipient(smsRecipient)) {
       return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
     }
 
@@ -52,7 +59,11 @@ export async function POST(request: Request) {
     let providerStatus: string;
 
     if (otpActive) {
-      const sms = await sendSamantelSms(phone, buildOtpMessage(code));
+      const sms = await sendSamantelSms({
+        recipient: smsRecipient,
+        inputPhone: phone,
+        body: buildOtpMessage(code),
+      });
       customerId = sms.customerId;
       serverId = sms.serverId;
       providerStatus = sms.providerStatus;

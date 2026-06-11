@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
-import { maskPhone, normalizeSmsRecipient } from "@/lib/phone";
+import { maskPhone, maskSmsRecipient } from "@/lib/phone";
 
 const SAMANTEL_URL = "https://sms.samantel.ir/services/rest/index.php";
+const SMS_RECIPIENT_PATTERN = /^98\d{10}$/;
 
 export type SamantelSendResult = {
   called: boolean;
@@ -10,6 +11,14 @@ export type SamantelSendResult = {
   providerStatus: string;
   httpStatus: number;
   ok: boolean;
+};
+
+export type SendSamantelSmsParams = {
+  /** Must already be 989XXXXXXXXX */
+  recipient: string;
+  /** Domestic/display phone for logging only (09XXXXXXXXX) */
+  inputPhone: string;
+  body: string;
 };
 
 type SamantelDataItem = {
@@ -37,8 +46,11 @@ function buildProviderStatus(
 }
 
 export function logSamantelResult(input: {
+  inputPhone: string;
   recipient: string;
   httpStatus: number;
+  parsedCode?: number;
+  parsedDataLength?: number;
   serverId: string | null;
   providerStatus: string;
   ok: boolean;
@@ -48,8 +60,11 @@ export function logSamantelResult(input: {
     "[samantel-sms]",
     JSON.stringify({
       called: input.called,
-      recipient: maskPhone(input.recipient),
+      inputPhoneMasked: maskPhone(input.inputPhone),
+      normalizedRecipientMasked: maskSmsRecipient(input.recipient),
       httpStatus: input.httpStatus,
+      parsedCode: input.parsedCode ?? null,
+      parsedDataLength: input.parsedDataLength ?? 0,
       serverId: input.serverId,
       providerStatus: input.providerStatus,
       ok: input.ok,
@@ -58,14 +73,36 @@ export function logSamantelResult(input: {
 }
 
 export async function sendSamantelSms(
-  phone: string,
-  body: string
+  params: SendSamantelSmsParams
 ): Promise<SamantelSendResult> {
+  const { recipient, inputPhone, body } = params;
+  const requestCustomerId = randomUUID();
+
+  if (!SMS_RECIPIENT_PATTERN.test(recipient)) {
+    const providerStatus = "called:no|invalid_recipient_format";
+    const result: SamantelSendResult = {
+      called: false,
+      customerId: requestCustomerId,
+      serverId: null,
+      providerStatus,
+      httpStatus: 0,
+      ok: false,
+    };
+    logSamantelResult({
+      inputPhone,
+      recipient,
+      httpStatus: 0,
+      serverId: null,
+      providerStatus,
+      ok: false,
+      called: false,
+    });
+    return result;
+  }
+
   const username = process.env.SAMANTEL_SMS_USERNAME ?? "";
   const password = process.env.SAMANTEL_SMS_PASSWORD ?? "";
   const sender = process.env.SAMANTEL_SMS_SENDER ?? "";
-  const requestCustomerId = randomUUID();
-  const recipient = normalizeSmsRecipient(phone);
 
   if (!username || !password || !sender) {
     const providerStatus = "called:no|missing_credentials";
@@ -78,10 +115,11 @@ export async function sendSamantelSms(
       ok: false,
     };
     logSamantelResult({
-      recipient: phone,
+      inputPhone,
+      recipient,
       httpStatus: 0,
       serverId: null,
-      providerStatus: result.providerStatus,
+      providerStatus,
       ok: false,
       called: false,
     });
@@ -129,7 +167,8 @@ export async function sendSamantelSms(
         ok: false,
       };
       logSamantelResult({
-        recipient: phone,
+        inputPhone,
+        recipient,
         httpStatus,
         serverId: null,
         providerStatus,
@@ -139,13 +178,13 @@ export async function sendSamantelSms(
       return result;
     }
 
+    const dataLength = parsed.data?.length ?? 0;
     const first = parsed.data?.[0];
     const serverId = first?.serverId != null ? String(first.serverId) : null;
     const customerId =
       first?.customerId != null ? String(first.customerId) : requestCustomerId;
 
-    const ok =
-      httpStatus === 200 && parsed.code === 200 && first?.serverId != null;
+    const ok = httpStatus === 200 && parsed.code === 200 && first?.serverId != null;
 
     const providerStatus = buildProviderStatus(true, httpStatus, parsed.code, serverId);
 
@@ -159,8 +198,11 @@ export async function sendSamantelSms(
     };
 
     logSamantelResult({
-      recipient: phone,
+      inputPhone,
+      recipient,
       httpStatus,
+      parsedCode: parsed.code,
+      parsedDataLength: dataLength,
       serverId,
       providerStatus,
       ok,
@@ -179,7 +221,8 @@ export async function sendSamantelSms(
       ok: false,
     };
     logSamantelResult({
-      recipient: phone,
+      inputPhone,
+      recipient,
       httpStatus: 0,
       serverId: null,
       providerStatus,
