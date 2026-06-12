@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "db:setup": "prisma db push && prisma db seed"
+    "db:setup": "prisma db push && prisma db seed",
+    "fix:fixtures": "tsx scripts/fix-fixtures.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

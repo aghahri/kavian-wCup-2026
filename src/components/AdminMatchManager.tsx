@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { getAllTeams, getTeamLocalizedSlot } from "@/lib/teams";
 
 type AdminMatch = {
   id: string;
@@ -9,6 +10,8 @@ type AdminMatch = {
   awayTeam: string;
   homeTeamFa: string;
   awayTeamFa: string;
+  homeTeamAr?: string | null;
+  awayTeamAr?: string | null;
   stage: string;
   kickoffAt: string | Date;
   homeScore: number | null;
@@ -21,11 +24,47 @@ type AdminMatchManagerProps = {
   initialMatches: AdminMatch[];
 };
 
+const TEAM_OPTIONS = getAllTeams()
+  .slice()
+  .sort((a, b) => a.countryName.localeCompare(b.countryName));
+
 function toLocalInputValue(date: string | Date): string {
   const d = new Date(date);
   const offset = d.getTimezoneOffset();
   const local = new Date(d.getTime() - offset * 60_000);
   return local.toISOString().slice(0, 16);
+}
+
+function TeamQuickReplace({
+  label,
+  value,
+  onSelect,
+}: {
+  label: string;
+  value: string;
+  onSelect: (slot: { en: string; fa: string; ar: string }) => void;
+}) {
+  return (
+    <label className="block text-xs text-white/60">
+      <span className="mb-1 block">{label}</span>
+      <select
+        value=""
+        onChange={(e) => {
+          const team = TEAM_OPTIONS.find((t) => t.fifaCode === e.target.value);
+          if (team) onSelect(getTeamLocalizedSlot(team));
+        }}
+        className="w-full rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-sm text-white"
+      >
+        <option value="">{value ? `جایگزین: ${value}` : "انتخاب تیم…"}</option>
+        {TEAM_OPTIONS.map((team) => (
+          <option key={team.fifaCode} value={team.fifaCode}>
+            {team.countryName}
+            {team.nameFa ? ` — ${team.nameFa}` : ""}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }
 
 export function AdminMatchManager({ initialMatches }: AdminMatchManagerProps) {
@@ -39,6 +78,8 @@ export function AdminMatchManager({ initialMatches }: AdminMatchManagerProps) {
     awayTeam: "",
     homeTeamFa: "",
     awayTeamFa: "",
+    homeTeamAr: "",
+    awayTeamAr: "",
     stage: "گروه A",
     kickoffAt: "",
   });
@@ -66,6 +107,8 @@ export function AdminMatchManager({ initialMatches }: AdminMatchManagerProps) {
       awayTeam: "",
       homeTeamFa: "",
       awayTeamFa: "",
+      homeTeamAr: "",
+      awayTeamAr: "",
       stage: "گروه A",
       kickoffAt: "",
     });
@@ -121,6 +164,30 @@ export function AdminMatchManager({ initialMatches }: AdminMatchManagerProps) {
       >
         <h2 className="mb-4 text-lg font-bold text-white">افزودن بازی جدید</h2>
         <div className="grid gap-3 sm:grid-cols-2">
+          <TeamQuickReplace
+            label="تیم میزبان — انتخاب سریع"
+            value={newMatch.homeTeam}
+            onSelect={(slot) =>
+              setNewMatch({
+                ...newMatch,
+                homeTeam: slot.en,
+                homeTeamFa: slot.fa,
+                homeTeamAr: slot.ar,
+              })
+            }
+          />
+          <TeamQuickReplace
+            label="تیم مهمان — انتخاب سریع"
+            value={newMatch.awayTeam}
+            onSelect={(slot) =>
+              setNewMatch({
+                ...newMatch,
+                awayTeam: slot.en,
+                awayTeamFa: slot.fa,
+                awayTeamAr: slot.ar,
+              })
+            }
+          />
           <input
             placeholder="تیم میزبان (انگلیسی)"
             value={newMatch.homeTeam}
@@ -205,34 +272,72 @@ function MatchEditor({
   ) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
+  const [homeTeam, setHomeTeam] = useState(match.homeTeam);
+  const [awayTeam, setAwayTeam] = useState(match.awayTeam);
   const [homeTeamFa, setHomeTeamFa] = useState(match.homeTeamFa);
   const [awayTeamFa, setAwayTeamFa] = useState(match.awayTeamFa);
+  const [homeTeamAr, setHomeTeamAr] = useState(match.homeTeamAr ?? "");
+  const [awayTeamAr, setAwayTeamAr] = useState(match.awayTeamAr ?? "");
   const [stage, setStage] = useState(match.stage);
   const [kickoffAt, setKickoffAt] = useState(toLocalInputValue(match.kickoffAt));
   const [homeScore, setHomeScore] = useState(match.homeScore ?? 0);
   const [awayScore, setAwayScore] = useState(match.awayScore ?? 0);
   const [isFinished, setIsFinished] = useState(match.isFinished);
 
+  const title = useMemo(
+    () => `${homeTeamFa || match.homeTeamFa} - ${awayTeamFa || match.awayTeamFa}`,
+    [homeTeamFa, awayTeamFa, match.homeTeamFa, match.awayTeamFa]
+  );
+
+  function applyHomeTeam(slot: { en: string; fa: string; ar: string }) {
+    setHomeTeam(slot.en);
+    setHomeTeamFa(slot.fa);
+    setHomeTeamAr(slot.ar);
+  }
+
+  function applyAwayTeam(slot: { en: string; fa: string; ar: string }) {
+    setAwayTeam(slot.en);
+    setAwayTeamFa(slot.fa);
+    setAwayTeamAr(slot.ar);
+  }
+
   return (
     <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-bold text-white">
-          {match.homeTeamFa} - {match.awayTeamFa}
-        </h3>
+        <h3 className="font-bold text-white">{title}</h3>
         <span className="text-xs text-white/50">
           {match._count.predictions} پیش‌بینی
         </span>
       </div>
 
+      <div className="mb-3 grid gap-3 sm:grid-cols-2">
+        <TeamQuickReplace label="جایگزینی تیم میزبان" value={homeTeam} onSelect={applyHomeTeam} />
+        <TeamQuickReplace label="جایگزینی تیم مهمان" value={awayTeam} onSelect={applyAwayTeam} />
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
+        <input
+          value={homeTeam}
+          onChange={(e) => setHomeTeam(e.target.value)}
+          placeholder="میزبان (EN)"
+          className="rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-white"
+        />
+        <input
+          value={awayTeam}
+          onChange={(e) => setAwayTeam(e.target.value)}
+          placeholder="مهمان (EN)"
+          className="rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-white"
+        />
         <input
           value={homeTeamFa}
           onChange={(e) => setHomeTeamFa(e.target.value)}
+          placeholder="میزبان (FA)"
           className="rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-white"
         />
         <input
           value={awayTeamFa}
           onChange={(e) => setAwayTeamFa(e.target.value)}
+          placeholder="مهمان (FA)"
           className="rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-white"
         />
         <input
@@ -284,8 +389,12 @@ function MatchEditor({
           type="button"
           onClick={() =>
             onUpdate(match.id, {
+              homeTeam,
+              awayTeam,
               homeTeamFa,
               awayTeamFa,
+              homeTeamAr: homeTeamAr || null,
+              awayTeamAr: awayTeamAr || null,
               stage,
               kickoffAt,
               homeScore,

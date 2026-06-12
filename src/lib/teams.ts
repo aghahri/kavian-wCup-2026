@@ -2,6 +2,8 @@ export type TeamMetadata = {
   teamCode: string;
   fifaCode: string;
   countryName: string;
+  nameFa?: string;
+  nameAr?: string;
   flagCode: string | null;
   aliases?: string[];
 };
@@ -24,6 +26,24 @@ const TEAMS: TeamMetadata[] = [
   { teamCode: "ALG", fifaCode: "ALG", countryName: "Algeria", flagCode: "dz" },
   { teamCode: "ENG", fifaCode: "ENG", countryName: "England", flagCode: "gb-eng" },
   { teamCode: "CRO", fifaCode: "CRO", countryName: "Croatia", flagCode: "hr" },
+  {
+    teamCode: "CZE",
+    fifaCode: "CZE",
+    countryName: "Czech Republic",
+    nameFa: "چک",
+    nameAr: "التشيك",
+    flagCode: "cz",
+    aliases: ["Czechia"],
+  },
+  {
+    teamCode: "BIH",
+    fifaCode: "BIH",
+    countryName: "Bosnia and Herzegovina",
+    nameFa: "بوسنی و هرزگوین",
+    nameAr: "البوسنة والهرسك",
+    flagCode: "ba",
+    aliases: ["Bosnia"],
+  },
   { teamCode: "ESP", fifaCode: "ESP", countryName: "Spain", flagCode: "es" },
   { teamCode: "CPV", fifaCode: "CPV", countryName: "Cape Verde", flagCode: "cv" },
   { teamCode: "GER", fifaCode: "GER", countryName: "Germany", flagCode: "de" },
@@ -136,4 +156,20 @@ export const FLAG_PLACEHOLDER_PATH = "/flags/placeholder.svg";
 
 export function getAllTeams(): TeamMetadata[] {
   return TEAMS;
+}
+
+export function getTeamByFifaCode(code: string): TeamMetadata | null {
+  return lookup.get(code.trim().toLowerCase()) ?? null;
+}
+
+export function getTeamLocalizedSlot(team: TeamMetadata): {
+  en: string;
+  fa: string;
+  ar: string;
+} {
+  return {
+    en: team.countryName,
+    fa: team.nameFa ?? team.countryName,
+    ar: team.nameAr ?? team.countryName,
+  };
 }
