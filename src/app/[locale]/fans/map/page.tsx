@@ -1,11 +1,13 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { FanMapGrid } from "@/components/FanMapGrid";
+import { PageHeader } from "@/components/PageHeader";
 import { buildFanMapStats } from "@/lib/fan-map";
 import type { Locale } from "@/i18n/routing";
 
 type PageProps = { params: Promise<{ locale: Locale }> };
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function FanMapPage({ params }: PageProps) {
   const { locale } = await params;
@@ -17,10 +19,9 @@ export default async function FanMapPage({ params }: PageProps) {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-600/20 to-[#0b1f3a] p-6 sm:p-8">
-        <h1 className="text-2xl font-black text-white sm:text-3xl">{t("title")}</h1>
-        <p className="mt-2 text-sm text-white/70">{t("subtitle")}</p>
-        <p className="mt-4 text-3xl font-black text-emerald-300">{totalFans}</p>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-600/10 p-5 text-center">
+        <p className="text-3xl font-black text-emerald-300">{totalFans}</p>
         <p className="text-sm text-white/50">{t("totalFans")}</p>
       </div>
       <FanMapGrid

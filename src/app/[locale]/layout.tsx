@@ -78,7 +78,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
             <div className="flex min-h-screen flex-col">
               <Header locale={locale as Locale} />
               <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
-              <Footer />
+              <Footer locale={locale as Locale} />
             </div>
           </CurrentUserProvider>
         </NextIntlClientProvider>

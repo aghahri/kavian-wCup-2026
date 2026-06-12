@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { PageHeader } from "@/components/PageHeader";
 import { PredictionForm } from "@/components/PredictionForm";
 import { TeamFlag } from "@/components/TeamFlag";
 import { getCurrentUser } from "@/lib/auth";
@@ -14,6 +15,9 @@ type PageProps = {
   params: Promise<{ locale: Locale }>;
   searchParams: Promise<{ match?: string }>;
 };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function PredictPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
@@ -39,10 +43,7 @@ export default async function PredictPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-white sm:text-3xl">{t("title")}</h1>
-        <p className="mt-2 text-sm text-white/70">{t("subtitle")}</p>
-      </div>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
       {openMatches.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">

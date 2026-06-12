@@ -11,6 +11,7 @@ import type { Locale } from "@/i18n/routing";
 type PageProps = { params: Promise<{ locale: Locale; id: string }> };
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function MatchSummaryPage({ params }: PageProps) {
   const { locale, id } = await params;
@@ -46,7 +47,7 @@ export default async function MatchSummaryPage({ params }: PageProps) {
           winner: t("winner"),
           exactPredictors: t("exactPredictors"),
           share: {
-            share: ts("title"),
+            share: t("shareResult"),
             telegram: ts("telegram"),
             whatsapp: ts("whatsapp"),
             x: ts("x"),

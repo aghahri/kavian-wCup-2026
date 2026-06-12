@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { PageHeader } from "@/components/PageHeader";
 import { LeaderboardTable } from "@/components/LeaderboardTable";
 import { LeaderboardTabs } from "@/components/LeaderboardTabs";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -15,6 +16,9 @@ type PageProps = {
   params: Promise<{ locale: Locale }>;
   searchParams: Promise<{ period?: string; tournament?: string }>;
 };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function LeaderboardPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
@@ -69,23 +73,23 @@ export default async function LeaderboardPage({ params, searchParams }: PageProp
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-white sm:text-3xl">{t("title")}</h1>
-          <p className="mt-2 text-sm text-white/70">{t("subtitle")}</p>
-        </div>
-        <ShareButtons
-          text={t("shareText")}
-          url={`${getSiteUrl()}/${locale}/leaderboard`}
-          labels={{
-            share: ts("title"),
-            telegram: ts("telegram"),
-            whatsapp: ts("whatsapp"),
-            x: ts("x"),
-            facebook: ts("facebook"),
-          }}
-        />
-      </div>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        action={
+          <ShareButtons
+            text={t("shareText")}
+            url={`${getSiteUrl()}/${locale}/leaderboard`}
+            labels={{
+              share: ts("title"),
+              telegram: ts("telegram"),
+              whatsapp: ts("whatsapp"),
+              x: ts("x"),
+              facebook: ts("facebook"),
+            }}
+          />
+        }
+      />
 
       <Suspense fallback={null}>
         <LeaderboardTabs

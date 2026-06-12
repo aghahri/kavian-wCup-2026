@@ -4,10 +4,13 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { TeamFlag } from "@/components/TeamFlag";
 import { getOrCreateMatchAnalysis } from "@/lib/match-analysis";
 import {
+  buildPredictionStats,
   formatAiPredictionLine,
   getLocalizedReasoning,
   RISK_LABELS,
+  SURPRISE_LABELS,
 } from "@/lib/ai/football-analysis";
+import { getMatchStatus } from "@/lib/match-status";
 import { getAwayTeamName, getHomeTeamName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/routing";
@@ -15,6 +18,7 @@ import type { Locale } from "@/i18n/routing";
 type PageProps = { params: Promise<{ locale: Locale; id: string }> };
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function MatchAiPage({ params }: PageProps) {
   const { locale, id } = await params;
@@ -24,10 +28,26 @@ export default async function MatchAiPage({ params }: PageProps) {
   const match = await prisma.match.findUnique({ where: { id } });
   if (!match) notFound();
 
+  const phase = getMatchStatus(match.kickoffAt, match.isFinished);
+  const predictions = await prisma.prediction.findMany({
+    where: { matchId: id },
+    select: { homeScore: true, awayScore: true },
+  });
+  const stats = buildPredictionStats(predictions, match);
   const analysis = await getOrCreateMatchAnalysis(match);
+
   const risk = RISK_LABELS[analysis.riskLevel as keyof typeof RISK_LABELS];
   const riskLabel = locale === "fa" ? risk.fa : locale === "ar" ? risk.ar : risk.en;
   const reasoning = getLocalizedReasoning(analysis, locale);
+  const isFinished = phase === "finished";
+  const isLive = phase === "live";
+
+  const surpriseLevel = analysis.riskLevel === "high" && isFinished ? "high" : "low";
+  const surprise = SURPRISE_LABELS[surpriseLevel as keyof typeof SURPRISE_LABELS];
+  const surpriseLabel = locale === "fa" ? surprise.fa : locale === "ar" ? surprise.ar : surprise.en;
+
+  const lessonLine = reasoning.length > 4 ? reasoning[reasoning.length - 1] : null;
+  const mainReasoning = lessonLine ? reasoning.slice(0, -1) : reasoning;
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -43,8 +63,13 @@ export default async function MatchAiPage({ params }: PageProps) {
         <h1 className="mt-4 text-center text-xl font-black text-white">
           {getHomeTeamName(match, locale)} vs {getAwayTeamName(match, locale)}
         </h1>
+
+        {isLive && (
+          <p className="mt-3 text-center text-sm font-semibold text-red-300">● LIVE</p>
+        )}
+
         <p className="mt-6 text-center text-lg font-black text-emerald-300">
-          {t("prediction")}:{" "}
+          {isFinished ? t("result") : t("prediction")}:{" "}
           {formatAiPredictionLine(
             match,
             locale,
@@ -54,27 +79,67 @@ export default async function MatchAiPage({ params }: PageProps) {
         </p>
         <p className="mt-2 text-center text-sm text-white/60">
           {t("risk")}: {riskLabel}
+          {isFinished && stats.total > 0 && (
+            <> · {t("surpriseStat", { wrong: stats.wrongPct, exact: stats.exactCount })}</>
+          )}
         </p>
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
-          <div className="rounded-xl bg-black/20 p-3">
-            <p className="font-black text-emerald-300">{analysis.homeWinPct}%</p>
-            <p className="text-xs text-white/50">{t("homeWin")}</p>
+
+        {!isFinished && (
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
+            <div className="rounded-xl bg-black/20 p-3">
+              <p className="font-black text-emerald-300">{analysis.homeWinPct}%</p>
+              <p className="text-xs text-white/50">{t("homeWin")}</p>
+            </div>
+            <div className="rounded-xl bg-black/20 p-3">
+              <p className="font-black text-emerald-300">{analysis.drawPct}%</p>
+              <p className="text-xs text-white/50">{t("draw")}</p>
+            </div>
+            <div className="rounded-xl bg-black/20 p-3">
+              <p className="font-black text-emerald-300">{analysis.awayWinPct}%</p>
+              <p className="text-xs text-white/50">{t("awayWin")}</p>
+            </div>
           </div>
-          <div className="rounded-xl bg-black/20 p-3">
-            <p className="font-black text-emerald-300">{analysis.drawPct}%</p>
-            <p className="text-xs text-white/50">{t("draw")}</p>
+        )}
+
+        {isFinished && stats.total > 0 && (
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="rounded-xl bg-white/5 p-3">
+              <p className="font-black text-emerald-300">{stats.exactCount}</p>
+              <p className="text-white/50">Exact</p>
+            </div>
+            <div className="rounded-xl bg-white/5 p-3">
+              <p className="font-black text-emerald-300">{stats.wrongPct}%</p>
+              <p className="text-white/50">Wrong</p>
+            </div>
+            <div className="rounded-xl bg-white/5 p-3">
+              <p className="font-black text-amber-300">{surpriseLabel}</p>
+              <p className="text-white/50">{t("surprise")}</p>
+            </div>
           </div>
-          <div className="rounded-xl bg-black/20 p-3">
-            <p className="font-black text-emerald-300">{analysis.awayWinPct}%</p>
-            <p className="text-xs text-white/50">{t("awayWin")}</p>
-          </div>
-        </div>
+        )}
+
         <h2 className="mt-6 text-sm font-bold text-white/80">{t("reasoning")}</h2>
         <ul className="mt-2 space-y-2 text-sm leading-7 text-white/70">
-          {reasoning.map((line, i) => (
+          {mainReasoning.map((line, i) => (
             <li key={i}>• {line}</li>
           ))}
         </ul>
+
+        {lessonLine && isFinished && (
+          <div className="mt-4 rounded-xl bg-amber-400/10 px-4 py-3">
+            <p className="text-xs font-bold text-amber-200">{t("lesson")}</p>
+            <p className="mt-1 text-sm leading-7 text-amber-100">{lessonLine}</p>
+          </div>
+        )}
+
+        {isFinished && (
+          <Link
+            href={`/${locale}/matches/${id}/summary`}
+            className="mt-6 block text-center text-sm text-emerald-300 hover:underline"
+          >
+            {t("viewDetail")} →
+          </Link>
+        )}
       </div>
     </div>
   );

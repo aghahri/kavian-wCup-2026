@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
 import { TeamFlag } from "@/components/TeamFlag";
 import { getOrCreateMatchAnalysis } from "@/lib/match-analysis";
 import {
   formatAiPredictionLine,
   getLocalizedReasoning,
   RISK_LABELS,
+  buildPredictionStats,
 } from "@/lib/ai/football-analysis";
+import { getMatchStatus } from "@/lib/match-status";
 import { getAwayTeamName, getHomeTeamName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/routing";
@@ -15,95 +18,168 @@ import type { Locale } from "@/i18n/routing";
 type PageProps = { params: Promise<{ locale: Locale }> };
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AiPulsePage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("ai");
 
-  const matches = await prisma.match.findMany({
-    where: { isFinished: false },
-    orderBy: { kickoffAt: "asc" },
-    take: 12,
-  });
+  const allMatches = await prisma.match.findMany({ orderBy: { kickoffAt: "desc" } });
 
-  const analyses = await Promise.all(
-    matches.map(async (match) => ({
+  const upcoming = allMatches.filter((m) => getMatchStatus(m.kickoffAt, m.isFinished) === "upcoming");
+  const finished = allMatches.filter((m) => getMatchStatus(m.kickoffAt, m.isFinished) === "finished");
+
+  const upcomingAnalyses = await Promise.all(
+    upcoming.slice(0, 8).map(async (match) => ({
       match,
       analysis: await getOrCreateMatchAnalysis(match),
     }))
   );
 
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-black text-white sm:text-3xl">{t("title")}</h1>
-        <p className="mt-2 text-sm text-white/70">{t("subtitle")}</p>
-      </div>
+  const finishedAnalyses = await Promise.all(
+    finished.slice(0, 8).map(async (match) => {
+      const predictions = await prisma.prediction.findMany({
+        where: { matchId: match.id },
+        select: { homeScore: true, awayScore: true },
+      });
+      const stats = buildPredictionStats(predictions, match);
+      return { match, analysis: await getOrCreateMatchAnalysis(match), stats };
+    })
+  );
 
-      {analyses.length === 0 ? (
-        <EmptyState icon="🤖" title={t("empty")} />
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {analyses.map(({ match, analysis }) => {
-            const risk = RISK_LABELS[analysis.riskLevel as keyof typeof RISK_LABELS];
-            const riskLabel = locale === "fa" ? risk.fa : locale === "ar" ? risk.ar : risk.en;
-            const reasoning = getLocalizedReasoning(analysis, locale);
-            return (
-              <article
+  const surprises = [...finishedAnalyses]
+    .sort((a, b) => b.stats.wrongPct - a.stats.wrongPct)
+    .slice(0, 4);
+
+  function riskLabel(level: string) {
+    const r = RISK_LABELS[level as keyof typeof RISK_LABELS];
+    return locale === "fa" ? r.fa : locale === "ar" ? r.ar : r.en;
+  }
+
+  return (
+    <div className="space-y-10">
+      <PageHeader title={t("title")} subtitle={t("subtitle")} badge={t("badge")} />
+
+      <section>
+        <h2 className="mb-4 text-lg font-bold text-emerald-300">{t("upcomingSection")}</h2>
+        {upcomingAnalyses.length === 0 ? (
+          <EmptyState icon="🤖" title={t("emptyUpcoming")} />
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {upcomingAnalyses.map(({ match, analysis }) => (
+              <AiCard
                 key={match.id}
-                className="rounded-2xl border border-white/10 bg-white/5 p-5"
+                match={match}
+                analysis={analysis}
+                locale={locale}
+                t={t}
+                riskLabel={riskLabel(analysis.riskLevel)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-lg font-bold text-white">{t("finishedSection")}</h2>
+        {finishedAnalyses.length === 0 ? (
+          <EmptyState icon="🏁" title={t("emptyFinished")} />
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {finishedAnalyses.map(({ match, analysis }) => (
+              <AiCard
+                key={match.id}
+                match={match}
+                analysis={analysis}
+                locale={locale}
+                t={t}
+                riskLabel={riskLabel(analysis.riskLevel)}
+                finished
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {surprises.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-lg font-bold text-amber-300">{t("surprisesSection")}</h2>
+          <div className="space-y-3">
+            {surprises.map(({ match, stats }) => (
+              <Link
+                key={match.id}
+                href={`/${locale}/matches/${match.id}/summary`}
+                className="block rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 hover:border-amber-400/40"
               >
-                <div className="flex items-center justify-center gap-3">
-                  <TeamFlag teamName={match.homeTeam} size={32} />
-                  <span className="text-white/40">vs</span>
-                  <TeamFlag teamName={match.awayTeam} size={32} />
-                </div>
-                <p className="mt-3 text-center font-bold text-white">
-                  {getHomeTeamName(match, locale)} vs {getAwayTeamName(match, locale)}
+                <p className="font-bold text-white">
+                  {getHomeTeamName(match, locale)} {match.homeScore} - {match.awayScore}{" "}
+                  {getAwayTeamName(match, locale)}
                 </p>
-                <p className="mt-4 text-center text-lg font-black text-emerald-300">
-                  {t("prediction")}:{" "}
-                  {formatAiPredictionLine(
-                    match,
-                    locale,
-                    analysis.suggestedHomeScore,
-                    analysis.suggestedAwayScore
-                  )}
+                <p className="mt-1 text-sm text-amber-200">
+                  {t("surpriseStat", { wrong: stats.wrongPct, exact: stats.exactCount })}
                 </p>
-                <p className="mt-2 text-center text-sm text-white/60">
-                  {t("risk")}: {riskLabel}
-                </p>
-                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="rounded-lg bg-black/20 p-2">
-                    <p className="font-bold text-white">{analysis.homeWinPct}%</p>
-                    <p className="text-white/50">{getHomeTeamName(match, locale)}</p>
-                  </div>
-                  <div className="rounded-lg bg-black/20 p-2">
-                    <p className="font-bold text-white">{analysis.drawPct}%</p>
-                    <p className="text-white/50">{t("draw")}</p>
-                  </div>
-                  <div className="rounded-lg bg-black/20 p-2">
-                    <p className="font-bold text-white">{analysis.awayWinPct}%</p>
-                    <p className="text-white/50">{getAwayTeamName(match, locale)}</p>
-                  </div>
-                </div>
-                <ul className="mt-4 space-y-1 text-xs leading-6 text-white/60">
-                  {reasoning.slice(0, 3).map((line, i) => (
-                    <li key={i}>• {line}</li>
-                  ))}
-                </ul>
-                <Link
-                  href={`/${locale}/matches/${match.id}/ai`}
-                  className="mt-4 block text-center text-sm text-emerald-300 hover:underline"
-                >
-                  {t("viewDetail")} →
-                </Link>
-              </article>
-            );
-          })}
-        </div>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
     </div>
+  );
+}
+
+function AiCard({
+  match,
+  analysis,
+  locale,
+  t,
+  riskLabel,
+  finished,
+}: {
+  match: Parameters<typeof getHomeTeamName>[0];
+  analysis: Awaited<ReturnType<typeof getOrCreateMatchAnalysis>>;
+  locale: Locale;
+  t: (key: string, values?: Record<string, string | number>) => string;
+  riskLabel: string;
+  finished?: boolean;
+}) {
+  const reasoning = getLocalizedReasoning(analysis, locale);
+  const surprise = analysis.riskLevel === "high" && finished;
+
+  return (
+    <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
+      <div className="flex items-center justify-center gap-3">
+        <TeamFlag teamName={match.homeTeam} size={32} />
+        <span className="text-white/40">vs</span>
+        <TeamFlag teamName={match.awayTeam} size={32} />
+      </div>
+      <p className="mt-3 text-center font-bold text-white">
+        {getHomeTeamName(match, locale)} vs {getAwayTeamName(match, locale)}
+      </p>
+      <p className="mt-4 text-center text-lg font-black text-emerald-300">
+        {finished ? t("result") : t("prediction")}:{" "}
+        {formatAiPredictionLine(
+          match,
+          locale,
+          analysis.suggestedHomeScore,
+          analysis.suggestedAwayScore
+        )}
+      </p>
+      <p className="mt-2 text-center text-sm text-white/60">
+        {t("risk")}: {riskLabel}
+        {surprise && ` · ${t("surprise")}`}
+      </p>
+      <ul className="mt-4 space-y-1 text-xs leading-6 text-white/60">
+        {reasoning.slice(0, 4).map((line, i) => (
+          <li key={i}>• {line}</li>
+        ))}
+      </ul>
+      <Link
+        href={`/${locale}/matches/${match.id}/ai`}
+        className="mt-4 block text-center text-sm text-emerald-300 hover:underline"
+      >
+        {t("viewDetail")} →
+      </Link>
+    </article>
   );
 }

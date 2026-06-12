@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { NO_STORE_HEADERS } from "@/lib/api-headers";
 import { requireAdmin } from "@/lib/auth";
-import {
-  analysisToDbFields,
-  generateFootballAnalysis,
-} from "@/lib/ai/football-analysis";
+import { regenerateMatchAnalysis } from "@/lib/match-analysis";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -27,14 +24,7 @@ export async function POST(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "NOT_FOUND" }, { status: 404, headers: NO_STORE_HEADERS });
     }
 
-    const generated = generateFootballAnalysis(match);
-    const fields = analysisToDbFields(match, generated);
-
-    const analysis = await prisma.matchAnalysis.upsert({
-      where: { matchId: id },
-      create: { matchId: id, ...fields },
-      update: fields,
-    });
+    const analysis = await regenerateMatchAnalysis(match);
 
     return NextResponse.json({ analysis }, { headers: NO_STORE_HEADERS });
   } catch (error) {

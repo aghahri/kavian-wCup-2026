@@ -33,6 +33,7 @@ export default async function AdminPage({ params }: PageProps) {
   ]);
 
   const cards = [
+    { href: `/${locale}/admin/ops`, title: t("opsTitle"), desc: t("opsSubtitle") },
     { href: `/${locale}/admin/matches`, title: t("matches"), desc: t("matchesDesc") },
     { href: `/${locale}/admin/predictions`, title: t("predictions"), desc: t("predictionsDesc") },
     { href: `/${locale}/admin/languages`, title: t("languages"), desc: t("languagesDesc") },

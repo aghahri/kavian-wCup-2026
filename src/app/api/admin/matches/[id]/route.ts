@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { refreshMatchAfterScoreUpdate } from "@/lib/matches/match-refresh";
 import { prisma } from "@/lib/prisma";
-import { calculatePoints } from "@/lib/scoring";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -48,26 +48,17 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const match = await prisma.match.update({ where: { id }, data });
 
-    if (match.isFinished && match.homeScore !== null && match.awayScore !== null) {
-      const predictions = await prisma.prediction.findMany({ where: { matchId: id } });
-      await Promise.all(
-        predictions.map((prediction) =>
-          prisma.prediction.update({
-            where: { id: prediction.id },
-            data: {
-              points: calculatePoints(
-                prediction.homeScore,
-                prediction.awayScore,
-                match.homeScore!,
-                match.awayScore!
-              ),
-            },
-          })
-        )
-      );
+    const scoreChanged =
+      body.homeScore !== undefined ||
+      body.awayScore !== undefined ||
+      body.isFinished !== undefined;
+
+    if (scoreChanged) {
+      await refreshMatchAfterScoreUpdate(id);
     }
 
-    return NextResponse.json({ match });
+    const refreshed = await prisma.match.findUnique({ where: { id } });
+    return NextResponse.json({ match: refreshed ?? match });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "ورود لازم است" }, { status: 401 });

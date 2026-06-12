@@ -1,10 +1,21 @@
 import type { Match } from "@prisma/client";
 import type { Locale } from "@/i18n/routing";
 import { getAwayTeamName, getHomeTeamName } from "@/lib/match-i18n";
+import { getMatchStatus, type MatchStatus } from "@/lib/match-status";
 
 export type RiskLevel = "low" | "medium" | "high";
+export type SurpriseLevel = "low" | "medium" | "high";
+
+export type PredictionStats = {
+  total: number;
+  exactCount: number;
+  correctResultCount: number;
+  wrongCount: number;
+  wrongPct: number;
+};
 
 export type FootballAnalysis = {
+  phase: MatchStatus;
   homeWinPct: number;
   drawPct: number;
   awayWinPct: number;
@@ -12,6 +23,10 @@ export type FootballAnalysis = {
   suggestedHomeScore: number;
   suggestedAwayScore: number;
   reasoning: string[];
+  reasoningEn: string[];
+  lesson?: string;
+  lessonEn?: string;
+  surpriseLevel?: SurpriseLevel;
 };
 
 function hashSeed(input: string): number {
@@ -34,7 +49,25 @@ function teamStrength(name: string): number {
   return 48 + (hashSeed(key) % 25);
 }
 
-export function generateFootballAnalysis(match: Match): FootballAnalysis {
+function correctResult(h: number, a: number, ph: number, pa: number): boolean {
+  return Math.sign(h - a) === Math.sign(ph - pa);
+}
+
+function winnerLabel(match: Match, locale: Locale): string {
+  if (match.homeScore === null || match.awayScore === null) return "";
+  if (match.homeScore > match.awayScore) return getHomeTeamName(match, locale);
+  if (match.awayScore > match.homeScore) return getAwayTeamName(match, locale);
+  return locale === "fa" ? "مساوی" : locale === "ar" ? "تعادل" : "Draw";
+}
+
+function surpriseFromStats(stats: PredictionStats): SurpriseLevel {
+  if (stats.total < 5) return "low";
+  if (stats.wrongPct >= 70) return "high";
+  if (stats.wrongPct >= 45) return "medium";
+  return "low";
+}
+
+function generateUpcomingAnalysis(match: Match): FootballAnalysis {
   const homeStr = teamStrength(match.homeTeam);
   const awayStr = teamStrength(match.awayTeam);
   const diff = homeStr - awayStr;
@@ -56,29 +89,30 @@ export function generateFootballAnalysis(match: Match): FootballAnalysis {
 
   const gap = Math.abs(homeWin - awayWin);
   const riskLevel: RiskLevel = gap >= 25 ? "low" : gap >= 12 ? "medium" : "high";
-
   const favoredHome = homeWin >= awayWin;
   const suggestedHomeScore = favoredHome ? (gap >= 20 ? 2 : 1) : draw >= 30 ? 1 : 0;
   const suggestedAwayScore = !favoredHome ? (gap >= 20 ? 2 : 1) : draw >= 30 ? 1 : 0;
-  if (suggestedHomeScore === suggestedAwayScore && suggestedHomeScore === 1) {
-    // nudge draw suggestion
-  }
-
-  const homeFa = match.homeTeamFa;
-  const awayFa = match.awayTeamFa;
 
   const reasoning = [
-    `فرم اخیر ${homeFa} در محاسبات داخلی امتیاز ${homeStr} گرفته است.`,
-    `${awayFa} با امتیاز ${awayStr} حریف متعادلی است.`,
+    `فرم اخیر ${match.homeTeamFa} در مدل داخلی امتیاز ${homeStr} گرفته است.`,
+    `${match.awayTeamFa} با امتیاز ${awayStr} حریف متعادلی است.`,
     gap < 12
       ? "دو تیم نزدیک به هم هستند؛ پیش‌بینی دقیق ریسک بالاتری دارد."
       : favoredHome
-        ? `${homeFa} در این تحلیل کمی برتر دیده می‌شود.`
-        : `${awayFa} در این تحلیل کمی برتر دیده می‌شود.`,
+        ? `${match.homeTeamFa} در این تحلیل کمی برتر دیده می‌شود.`
+        : `${match.awayTeamFa} در این تحلیل کمی برتر دیده می‌شود.`,
     `احتمال مساوی ${draw}٪ برآورد شده است.`,
   ];
 
+  const reasoningEn = [
+    `${match.homeTeam} model strength: ${homeStr}.`,
+    `${match.awayTeam} model strength: ${awayStr}.`,
+    gap < 12 ? "Close match — exact score is harder." : "One side has a slight edge.",
+    `Draw probability: ${draw}%.`,
+  ];
+
   return {
+    phase: "upcoming",
     homeWinPct: homeWin,
     drawPct: draw,
     awayWinPct: awayWin,
@@ -86,18 +120,130 @@ export function generateFootballAnalysis(match: Match): FootballAnalysis {
     suggestedHomeScore,
     suggestedAwayScore,
     reasoning,
+    reasoningEn,
   };
 }
 
-export function analysisToDbFields(match: Match, analysis: FootballAnalysis) {
-  const reasoningEn = [
-    `${match.homeTeam} strength score: ${teamStrength(match.homeTeam)}.`,
-    `${match.awayTeam} strength score: ${teamStrength(match.awayTeam)}.`,
-    analysis.riskLevel === "high"
-      ? "Close match — exact score is harder to predict."
-      : "One side has a slight edge in this model.",
-    `Draw probability estimated at ${analysis.drawPct}%.`,
+function generateLiveAnalysis(match: Match): FootballAnalysis {
+  const base = generateUpcomingAnalysis(match);
+  return {
+    ...base,
+    phase: "live",
+    reasoning: [
+      "بازی در جریان است — نتیجه هنوز قطعی نیست.",
+      ...base.reasoning.slice(0, 2),
+      "پیش‌بینی‌های ثبت‌شده ممکن است با تحولات زمین تغییر کند.",
+    ],
+    reasoningEn: [
+      "Match is live — outcome still uncertain.",
+      ...base.reasoningEn.slice(0, 2),
+      "Registered predictions may shift as the match evolves.",
+    ],
+  };
+}
+
+function generateFinishedAnalysis(match: Match, stats: PredictionStats): FootballAnalysis {
+  const hs = match.homeScore ?? 0;
+  const as = match.awayScore ?? 0;
+  const winnerFa = winnerLabel(match, "fa");
+  const winnerEn = winnerLabel(match, "en");
+  const surpriseLevel = surpriseFromStats(stats);
+
+  const reasoning = [
+    `نتیجه نهایی: ${match.homeTeamFa} ${hs} - ${as} ${match.awayTeamFa}`,
+    `برنده: ${winnerFa}`,
+    `${stats.exactCount} نفر نتیجه دقیق را زدند از ${stats.total} پیش‌بینی.`,
+    `${stats.wrongPct}٪ کاربران نتیجه را اشتباه حدس زدند.`,
   ];
+
+  const reasoningEn = [
+    `Final score: ${match.homeTeam} ${hs} - ${as} ${match.awayTeam}`,
+    `Winner: ${winnerEn}`,
+    `${stats.exactCount} exact predictions out of ${stats.total}.`,
+    `${stats.wrongPct}% of users predicted the wrong outcome.`,
+  ];
+
+  const lesson =
+    surpriseLevel === "high"
+      ? `این بازی نشان داد که جام جهانی غافلگیرکننده است — اکثر کاربران (${stats.wrongPct}٪) اشتباه کردند.`
+      : stats.exactCount > 0
+        ? `این بازی نشان داد که پیش‌بینی دقیق ممکن است — ${stats.exactCount} نفر نتیجه را درست زدند.`
+        : `این بازی نشان داد که حتی نتیجه درست هم ساده نیست — هیچ پیش‌بینی دقیقی ثبت نشد.`;
+
+  const lessonEn =
+    surpriseLevel === "high"
+      ? `This match showed how unpredictable the World Cup can be — ${stats.wrongPct}% got it wrong.`
+      : stats.exactCount > 0
+        ? `${stats.exactCount} users nailed the exact score.`
+        : `No exact-score predictions — even the right outcome was hard to call.`;
+
+  let homeWinPct = 0;
+  let drawPct = 0;
+  let awayWinPct = 0;
+  if (hs > as) homeWinPct = 100;
+  else if (as > hs) awayWinPct = 100;
+  else drawPct = 100;
+
+  return {
+    phase: "finished",
+    homeWinPct,
+    drawPct,
+    awayWinPct,
+    riskLevel: surpriseLevel === "high" ? "high" : "low",
+    suggestedHomeScore: hs,
+    suggestedAwayScore: as,
+    reasoning,
+    reasoningEn,
+    lesson,
+    lessonEn,
+    surpriseLevel,
+  };
+}
+
+export function buildPredictionStats(
+  predictions: { homeScore: number; awayScore: number }[],
+  match: Match
+): PredictionStats {
+  if (match.homeScore === null || match.awayScore === null) {
+    return { total: predictions.length, exactCount: 0, correctResultCount: 0, wrongCount: 0, wrongPct: 0 };
+  }
+
+  let exact = 0;
+  let correct = 0;
+  for (const p of predictions) {
+    if (p.homeScore === match.homeScore && p.awayScore === match.awayScore) exact++;
+    else if (correctResult(match.homeScore, match.awayScore, p.homeScore, p.awayScore)) correct++;
+  }
+  const total = predictions.length;
+  const wrong = total - exact - correct;
+  return {
+    total,
+    exactCount: exact,
+    correctResultCount: correct + exact,
+    wrongCount: wrong,
+    wrongPct: total > 0 ? Math.round((wrong / total) * 100) : 0,
+  };
+}
+
+export function generateFootballAnalysis(
+  match: Match,
+  stats: PredictionStats = { total: 0, exactCount: 0, correctResultCount: 0, wrongCount: 0, wrongPct: 0 }
+): FootballAnalysis {
+  const phase = getMatchStatus(match.kickoffAt, match.isFinished);
+  if (phase === "finished" && match.homeScore !== null && match.awayScore !== null) {
+    return generateFinishedAnalysis(match, stats);
+  }
+  if (phase === "live") return generateLiveAnalysis(match);
+  return generateUpcomingAnalysis(match);
+}
+
+export function analysisToDbFields(analysis: FootballAnalysis) {
+  const reasoningFa = analysis.lesson
+    ? [...analysis.reasoning, analysis.lesson]
+    : analysis.reasoning;
+  const reasoningEn = analysis.lessonEn
+    ? [...analysis.reasoningEn, analysis.lessonEn]
+    : analysis.reasoningEn;
 
   return {
     homeWinPct: analysis.homeWinPct,
@@ -106,7 +252,7 @@ export function analysisToDbFields(match: Match, analysis: FootballAnalysis) {
     riskLevel: analysis.riskLevel,
     suggestedHomeScore: analysis.suggestedHomeScore,
     suggestedAwayScore: analysis.suggestedAwayScore,
-    reasoningFa: JSON.stringify(analysis.reasoning),
+    reasoningFa: JSON.stringify(reasoningFa),
     reasoningEn: JSON.stringify(reasoningEn),
     reasoningAr: JSON.stringify(reasoningEn),
   };
@@ -140,4 +286,10 @@ export const RISK_LABELS: Record<RiskLevel, { fa: string; en: string; ar: string
   low: { fa: "کم", en: "Low", ar: "منخفض" },
   medium: { fa: "متوسط", en: "Medium", ar: "متوسط" },
   high: { fa: "بالا", en: "High", ar: "مرتفع" },
+};
+
+export const SURPRISE_LABELS: Record<SurpriseLevel, { fa: string; en: string; ar: string }> = {
+  low: { fa: "عادی", en: "Expected", ar: "متوقع" },
+  medium: { fa: "غافلگیرکننده", en: "Surprising", ar: "مفاجئ" },
+  high: { fa: "شگفت‌انگیز", en: "Huge upset", ar: "مفاجأة كبيرة" },
 };
