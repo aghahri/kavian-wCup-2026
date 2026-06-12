@@ -168,6 +168,8 @@
     "verifyOtp": "تأیید و ورود",
     "verifying": "در حال تأیید...",
     "changePhone": "تغییر شماره موبایل",
+    "nameRequiredHint": "نام خود را وارد کنید تا ثبت‌نام کامل شود.",
+    "completeRegistration": "تکمیل ثبت‌نام",
     "adminHint": "مدیر: کاویان — ۰۹۱۲۰۰۰۰۰۰۰ | حالت توسعه: کد ۱۲۳۴۵۶"
   },
   "footer": {

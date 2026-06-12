@@ -18,6 +18,9 @@ import type { Locale } from "@/i18n/routing";
 
 type PageProps = { params: Promise<{ locale: Locale }> };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ProfilePage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);

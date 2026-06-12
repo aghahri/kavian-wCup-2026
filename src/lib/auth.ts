@@ -1,7 +1,9 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/session";
 
 export async function getCurrentUser() {
+  noStore();
   const userId = await getSessionUserId();
   if (!userId) return null;
 

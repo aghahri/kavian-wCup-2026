@@ -168,6 +168,8 @@
     "verifyOtp": "تأكيد ودخول",
     "verifying": "جارٍ التحقق...",
     "changePhone": "تغيير الرقم",
+    "nameRequiredHint": "أدخل اسمك لإكمال التسجيل.",
+    "completeRegistration": "إكمال التسجيل",
     "adminHint": "المسؤول: كافيان — 09120000000 | وضع التطوير: 123456"
   },
   "footer": {

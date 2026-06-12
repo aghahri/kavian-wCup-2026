@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isIranDialCode } from "@/lib/countries";
+import { NO_STORE_HEADERS } from "@/lib/api-headers";
 import { isValidIranMobile, maskPhone, normalizePhoneInput } from "@/lib/phone";
 import {
   isOtpDevBypass,
@@ -40,6 +41,15 @@ function logVerifyOtpDebug(payload: VerifyDebug) {
   });
 }
 
+function logVerifySuccess(phone: string, userId: string, isNewUser: boolean) {
+  console.info("[verify-otp] success", {
+    phoneMask: maskPhone(phone),
+    userId,
+    isNewUser,
+    sessionCreated: true,
+  });
+}
+
 async function recordVerifyDebug(
   challengeId: string | undefined,
   existingStatus: string | null | undefined,
@@ -54,15 +64,11 @@ async function recordVerifyDebug(
   });
 }
 
-function fail(
-  payload: VerifyDebug,
-  status: number,
-  extra?: { needsName?: boolean }
-) {
+function fail(payload: VerifyDebug, status: number) {
   logVerifyOtpDebug(payload);
   return NextResponse.json(
-    { error: GENERIC_ERROR, ...extra },
-    { status }
+    { error: GENERIC_ERROR },
+    { status, headers: NO_STORE_HEADERS }
   );
 }
 
@@ -145,8 +151,8 @@ export async function POST(request: Request) {
       debug.debugReason = "needs_name";
       logVerifyOtpDebug(debug);
       return NextResponse.json(
-        { error: GENERIC_ERROR, needsName: true },
-        { status: 400 }
+        { needsName: true },
+        { status: 200, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -180,14 +186,22 @@ export async function POST(request: Request) {
 
     debug.debugReason = "success";
     logVerifyOtpDebug(debug);
+    logVerifySuccess(phone, user.id, isNewUser);
 
-    return NextResponse.json({
-      user: { id: user.id, name: user.name, isAdmin: user.isAdmin },
-    });
+    return NextResponse.json(
+      {
+        user: { id: user.id, name: user.name, isAdmin: user.isAdmin },
+        isNewUser,
+      },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch (error) {
     debug.debugReason = "exception";
     logVerifyOtpDebug(debug);
     console.error("[verify-otp] exception", error);
-    return NextResponse.json({ error: GENERIC_ERROR }, { status: 500 });
+    return NextResponse.json(
+      { error: GENERIC_ERROR },
+      { status: 500, headers: NO_STORE_HEADERS }
+    );
   }
 }

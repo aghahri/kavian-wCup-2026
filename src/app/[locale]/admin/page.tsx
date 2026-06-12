@@ -12,6 +12,9 @@ type PageProps = {
   params: Promise<{ locale: Locale }>;
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);

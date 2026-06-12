@@ -168,6 +168,8 @@
     "verifyOtp": "Verify & login",
     "verifying": "Verifying...",
     "changePhone": "Change phone number",
+    "nameRequiredHint": "Enter your name to complete registration.",
+    "completeRegistration": "Complete registration",
     "adminHint": "Admin: Kavian — 09120000000 | Dev mode code: 123456"
   },
   "footer": {

@@ -12,7 +12,11 @@ export function LogoutButton({ locale, label }: LogoutButtonProps) {
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      cache: "no-store",
+      credentials: "same-origin",
+    });
     router.push(`/${locale}`);
     router.refresh();
   }

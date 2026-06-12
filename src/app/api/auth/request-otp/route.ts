@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { NO_STORE_HEADERS } from "@/lib/api-headers";
 import { isIranDialCode } from "@/lib/countries";
 import {
   maskPhone,
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     if (!isIranDialCode(countryDial)) {
       return NextResponse.json(
         { error: IRAN_OTP_ONLY, errorCode: "IRAN_OTP_ONLY" },
-        { status: 400 }
+        { status: 400, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
     const smsRecipient = normalizeSmsRecipient(phone);
 
     if (!isValidIranMobile(phone) || !isValidSmsRecipient(smsRecipient)) {
-      return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
+      return NextResponse.json({ error: GENERIC_ERROR }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
     const recent = await prisma.otpChallenge.findFirst({
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     if (recent) {
       return NextResponse.json(
         { error: GENERIC_ERROR, errorCode: "RATE_LIMIT" },
-        { status: 429 }
+        { status: 429, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
     const devBypass = isOtpDevBypass();
 
     if (!otpActive && !devBypass) {
-      return NextResponse.json({ error: GENERIC_ERROR }, { status: 503 });
+      return NextResponse.json({ error: GENERIC_ERROR }, { status: 503, headers: NO_STORE_HEADERS });
     }
 
     let customerId: string | null = null;
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
             providerStatus: `${providerStatus}|send_failed`,
           },
         });
-        return NextResponse.json({ error: GENERIC_ERROR }, { status: 502 });
+        return NextResponse.json({ error: GENERIC_ERROR }, { status: 502, headers: NO_STORE_HEADERS });
       }
 
       if (!sms.ok && devBypass) {
@@ -119,13 +120,17 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      ok: true,
-      phoneMask: maskPhone(phone),
-      expiresInSeconds: OTP_EXPIRY_MS / 1000,
-      smsDispatched: providerStatus.includes("called:yes") && !providerStatus.includes("send_failed"),
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        phoneMask: maskPhone(phone),
+        expiresInSeconds: OTP_EXPIRY_MS / 1000,
+        smsDispatched:
+          providerStatus.includes("called:yes") && !providerStatus.includes("send_failed"),
+      },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch {
-    return NextResponse.json({ error: GENERIC_ERROR }, { status: 500 });
+    return NextResponse.json({ error: GENERIC_ERROR }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }
