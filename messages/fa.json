@@ -13,6 +13,7 @@
     "fanMap": "نقشه هواداران",
     "schools": "مدارس",
     "referrals": "دعوت‌ها",
+    "daily": "چالش روزانه",
     "tournaments": "تورنمنت‌ها",
     "profile": "پروفایل",
     "admin": "مدیریت",
@@ -83,7 +84,13 @@
     "success": "پیش‌بینی شما با موفقیت ثبت شد!",
     "yourPrediction": "پیش‌بینی شما: {home} - {away}",
     "pointsEarned": "({points} امتیاز)",
-    "shareText": "من الان یک بازی جام جهانی ۲۰۲۶ را در کاویان فوتبال پیش‌بینی کردم!"
+    "shareText": "من الان یک بازی جام جهانی ۲۰۲۶ را در کاویان فوتبال پیش‌بینی کردم!",
+    "closesIn": "زمان باقی‌مانده تا بسته شدن پیش‌بینی",
+    "predictionClosed": "پیش‌بینی بسته شد",
+    "countdownDays": "روز",
+    "countdownHours": "ساعت",
+    "countdownMinutes": "دقیقه",
+    "countdownSeconds": "ثانیه"
   },
   "match": {
     "vs": "VS",
@@ -151,7 +158,8 @@
     "perfectScore": "نتیجه دقیق",
     "threeExactScores": "۳ نتیجه دقیق",
     "leagueFounder": "بنیان‌گذار لیگ",
-    "schoolCaptain": "کاپیتان مدرسه"
+    "schoolCaptain": "کاپیتان مدرسه",
+    "dailyStreak": "استریک روزانه"
   },
   "share": {
     "title": "اشتراک‌گذاری",
@@ -258,7 +266,16 @@
     "opsOtpSuccess": "موفقیت OTP امروز",
     "opsRefreshAll": "به‌روزرسانی همه آمار بازی‌ها",
     "opsRecentFinished": "بازی‌های اخیر تمام‌شده",
-    "opsNoFinished": "هنوز بازی تمام‌شده‌ای ثبت نشده"
+    "opsNoFinished": "هنوز بازی تمام‌شده‌ای ثبت نشده",
+    "matchdayTitle": "عملیات روز بازی",
+    "matchdaySubtitle": "بازی‌های امروز، نتایج و به‌روزرسانی تحلیل",
+    "matchdayToday": "بازی‌های امروز",
+    "matchdayMissing": "بدون نتیجه",
+    "matchdayNeedsAi": "نیاز به تحلیل هوش",
+    "matchdayClosePredictions": "بستن پیش‌بینی بازی‌های شروع‌شده",
+    "matchdayRefreshSummaries": "به‌روزرسانی خلاصه بازی‌های تمام‌شده",
+    "matchdayTodayList": "برنامه امروز",
+    "matchdayNoToday": "امروز بازی‌ای در برنامه نیست"
   },
   "leagues": {
     "title": "لیگ‌های خصوصی",
@@ -288,6 +305,11 @@
     "back": "بازگشت",
     "shareLeague": "به لیگ {title} بپیوندید!",
     "inviteTitle": "لینک دعوت لیگ",
+    "inviteCreatedTitle": "لیگ شما ساخته شد!",
+    "inviteReward": "دعوت کن و امتیاز بگیر",
+    "inviteClicks": "کلیک دعوت",
+    "inviteJoins": "عضویت از دعوت",
+    "goToLeague": "رفتن به لیگ",
     "inviteDesc": "این لینک را برای خانواده و دوستان بفرستید",
     "copyLink": "کپی لینک",
     "copied": "کپی شد!",
@@ -329,14 +351,55 @@
     "awayWin": "برد مهمان",
     "reasoning": "دلایل تحلیل",
     "lesson": "درس این بازی",
-    "viewDetail": "جزئیات"
+    "viewDetail": "جزئیات",
+    "pickOfDay": "انتخاب روز هوش",
+    "upsetRisk": "بیشترین ریسک غافلگیری",
+    "safestPick": "امن‌ترین پیش‌بینی"
   },
   "summary": {
     "back": "بازی‌ها",
     "winner": "برنده",
     "exactPredictors": "پیش‌بینی‌های دقیق",
     "shareText": "{home} {score} {away} — خلاصه بازی کاویان فوتبال",
-    "shareResult": "اشتراک این نتیجه"
+    "shareResult": "اشتراک این نتیجه",
+    "surprise": "سطح غافلگیری",
+    "exact": "دقیق",
+    "wrong": "اشتباه",
+    "total": "کل"
+  },
+  "daily": {
+    "title": "چالش پیش‌بینی روزانه",
+    "subtitle": "امروز ۳ پیش‌بینی بزن: نتیجه، گل اول، برنده",
+    "badge": "چالش روز",
+    "empty": "امروز بازی‌ای برای چالش نیست",
+    "score": "پیش‌بینی نتیجه",
+    "firstGoal": "تیم گل‌زن اول",
+    "winner": "برنده بازی",
+    "firstHome": "میزبان",
+    "firstAway": "مهمان",
+    "firstNone": "بدون گل",
+    "winDraw": "مساوی",
+    "submit": "ثبت چالش امروز",
+    "submitting": "در حال ثبت...",
+    "success": "چالش امروز ثبت شد!",
+    "closed": "زمان چالش امروز تمام شده",
+    "versus": "در برابر",
+    "leaderboard": "جدول چالش امروز",
+    "leaderboardEmpty": "هنوز کسی ثبت نکرده",
+    "pts": "امتیاز",
+    "streak": "{count} روز پیاپی",
+    "viewGlobal": "جدول کلی"
+  },
+  "notifications": {
+    "title": "اعلان‌ها",
+    "subtitle": "ترجیحات اعلان خود را تنظیم کنید",
+    "matchReminders": "یادآوری بازی‌ها",
+    "leagueUpdates": "به‌روزرسانی لیگ",
+    "predictionResults": "نتیجه پیش‌بینی‌ها",
+    "save": "ذخیره ترجیحات",
+    "saving": "در حال ذخیره...",
+    "saved": "ذخیره شد",
+    "comingSoon": "ارسال واقعی اعلان به‌زودی فعال می‌شود"
   },
   "fans": {
     "title": "نقشه جهانی هواداران جام جهانی کاویان",

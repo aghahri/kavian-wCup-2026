@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { NotificationPrefsForm } from "@/components/NotificationPrefsForm";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { ProfileHero } from "@/components/ProfileHero";
 import { ReferralBanner } from "@/components/ReferralBanner";
@@ -26,13 +27,14 @@ export default async function ProfilePage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("profile");
+  const tn = await getTranslations("notifications");
   const tb = await getTranslations("badges");
   const ts = await getTranslations("share");
 
   const session = await getCurrentUser();
   if (!session) redirect(`/${locale}/login`);
 
-  const [user, rank, badges] = await Promise.all([
+  const [user, rank, badges, notifPrefs] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.id },
       include: {
@@ -43,6 +45,11 @@ export default async function ProfilePage({ params }: PageProps) {
     }),
     getUserRank(session.id, "global"),
     syncUserBadges(session.id),
+    prisma.userNotificationPrefs.upsert({
+      where: { userId: session.id },
+      create: { userId: session.id },
+      update: {},
+    }),
   ]);
 
   if (!user) redirect(`/${locale}/login`);
@@ -66,6 +73,7 @@ export default async function ProfilePage({ params }: PageProps) {
     three_exact_scores: tb("threeExactScores"),
     league_founder: tb("leagueFounder"),
     school_captain: tb("schoolCaptain"),
+    daily_streak: tb("dailyStreak"),
   };
 
   return (
@@ -146,6 +154,25 @@ export default async function ProfilePage({ params }: PageProps) {
           whatsapp: ts("whatsapp"),
           x: ts("x"),
           facebook: ts("facebook"),
+        }}
+      />
+
+      <NotificationPrefsForm
+        initial={{
+          matchReminders: notifPrefs.matchReminders,
+          leagueUpdates: notifPrefs.leagueUpdates,
+          predictionResults: notifPrefs.predictionResults,
+        }}
+        labels={{
+          title: tn("title"),
+          subtitle: tn("subtitle"),
+          matchReminders: tn("matchReminders"),
+          leagueUpdates: tn("leagueUpdates"),
+          predictionResults: tn("predictionResults"),
+          save: tn("save"),
+          saving: tn("saving"),
+          saved: tn("saved"),
+          comingSoon: tn("comingSoon"),
         }}
       />
 

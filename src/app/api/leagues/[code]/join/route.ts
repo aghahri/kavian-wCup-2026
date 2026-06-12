@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { NO_STORE_HEADERS } from "@/lib/api-headers";
 import { requireUser } from "@/lib/auth";
+import { markLeagueInviteJoined } from "@/lib/league-invite-stats";
 import { getLeagueByCode } from "@/lib/private-leagues";
 import { prisma } from "@/lib/prisma";
 
@@ -27,10 +28,7 @@ export async function POST(_request: Request, context: RouteContext) {
       data: { leagueId: league.id, userId: user.id, role: "member" },
     });
 
-    await prisma.privateLeagueInviteClick.updateMany({
-      where: { leagueCode: league.code, registered: false },
-      data: { registered: true },
-    });
+    await markLeagueInviteJoined(league.id, user.id);
 
     return NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
   } catch (error) {

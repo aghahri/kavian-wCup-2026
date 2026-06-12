@@ -21,7 +21,4 @@ export function formatNumber(value: number, locale: Locale): string {
   return new Intl.NumberFormat(localeMap[locale]).format(value);
 }
 
-export function isPredictionOpen(kickoffAt: Date, isFinished: boolean): boolean {
-  if (isFinished) return false;
-  return new Date() < kickoffAt;
-}
+export { isPredictionOpen, msUntilPredictionClose } from "@/lib/prediction-lock";

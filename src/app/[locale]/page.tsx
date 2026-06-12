@@ -242,6 +242,7 @@ export default async function HomePage({ params }: PageProps) {
               three_exact_scores: "",
               league_founder: "",
               school_captain: "",
+              daily_streak: "",
             }}
             showProfileLink={false}
           />

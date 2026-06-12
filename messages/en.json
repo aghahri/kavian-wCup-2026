@@ -13,6 +13,7 @@
     "fanMap": "Fan Map",
     "schools": "Schools",
     "referrals": "Referrals",
+    "daily": "Daily Challenge",
     "tournaments": "Tournaments",
     "profile": "Profile",
     "admin": "Admin",
@@ -83,7 +84,13 @@
     "success": "Your prediction was saved!",
     "yourPrediction": "Your pick: {home} - {away}",
     "pointsEarned": "({points} pts)",
-    "shareText": "I just predicted a World Cup 2026 match on Kavian Football!"
+    "shareText": "I just predicted a World Cup 2026 match on Kavian Football!",
+    "closesIn": "Predictions close in",
+    "predictionClosed": "Predictions closed",
+    "countdownDays": "days",
+    "countdownHours": "hrs",
+    "countdownMinutes": "min",
+    "countdownSeconds": "sec"
   },
   "match": {
     "vs": "VS",
@@ -151,7 +158,8 @@
     "perfectScore": "Perfect Score",
     "threeExactScores": "3 Exact Scores",
     "leagueFounder": "League Founder",
-    "schoolCaptain": "School Captain"
+    "schoolCaptain": "School Captain",
+    "dailyStreak": "Daily streak"
   },
   "share": {
     "title": "Share",
@@ -258,7 +266,16 @@
     "opsOtpSuccess": "OTP success today",
     "opsRefreshAll": "Refresh all match stats",
     "opsRecentFinished": "Recently finished matches",
-    "opsNoFinished": "No finished matches yet"
+    "opsNoFinished": "No finished matches yet",
+    "matchdayTitle": "Match-day operations",
+    "matchdaySubtitle": "Today's matches, scores, and AI refresh",
+    "matchdayToday": "Matches today",
+    "matchdayMissing": "Missing scores",
+    "matchdayNeedsAi": "Needs AI refresh",
+    "matchdayClosePredictions": "Close predictions for started matches",
+    "matchdayRefreshSummaries": "Refresh all finished match summaries",
+    "matchdayTodayList": "Today's schedule",
+    "matchdayNoToday": "No matches scheduled today"
   },
   "leagues": {
     "title": "Private leagues",
@@ -288,6 +305,11 @@
     "back": "Back",
     "shareLeague": "Join {title}!",
     "inviteTitle": "League invite link",
+    "inviteCreatedTitle": "Your league is ready!",
+    "inviteReward": "Invite friends and earn points",
+    "inviteClicks": "Invite clicks",
+    "inviteJoins": "Joined via invite",
+    "goToLeague": "Go to league",
     "inviteDesc": "Share this link with family and friends",
     "copyLink": "Copy link",
     "copied": "Copied!",
@@ -329,14 +351,55 @@
     "awayWin": "Away win",
     "reasoning": "Analysis",
     "lesson": "Lesson from this match",
-    "viewDetail": "Details"
+    "viewDetail": "Details",
+    "pickOfDay": "AI pick of the day",
+    "upsetRisk": "Biggest upset risk",
+    "safestPick": "Safest prediction"
   },
   "summary": {
     "back": "Fixtures",
     "winner": "Winner",
     "exactPredictors": "Exact predictors",
     "shareText": "{home} {score} {away} — Kavian Football match recap",
-    "shareResult": "Share this result"
+    "shareResult": "Share this result",
+    "surprise": "Surprise level",
+    "exact": "Exact",
+    "wrong": "Wrong",
+    "total": "Total"
+  },
+  "daily": {
+    "title": "Daily prediction challenge",
+    "subtitle": "Predict score, first goal team, and winner today",
+    "badge": "Daily",
+    "empty": "No match for today's challenge",
+    "score": "Score prediction",
+    "firstGoal": "First goal team",
+    "winner": "Match winner",
+    "firstHome": "Home",
+    "firstAway": "Away",
+    "firstNone": "No goals",
+    "winDraw": "Draw",
+    "submit": "Submit today's challenge",
+    "submitting": "Submitting...",
+    "success": "Today's challenge saved!",
+    "closed": "Today's challenge is closed",
+    "versus": "vs",
+    "leaderboard": "Today's challenge board",
+    "leaderboardEmpty": "No entries yet",
+    "pts": "pts",
+    "streak": "{count}-day streak",
+    "viewGlobal": "Global leaderboard"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Manage your notification preferences",
+    "matchReminders": "Match reminders",
+    "leagueUpdates": "League updates",
+    "predictionResults": "Prediction results",
+    "save": "Save preferences",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "comingSoon": "Real push notifications coming soon"
   },
   "fans": {
     "title": "Kavian World Cup global fan map",

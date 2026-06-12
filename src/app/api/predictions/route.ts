@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "بازی پیدا نشد" }, { status: 404 });
     }
 
-    if (!isPredictionOpen(match.kickoffAt, match.isFinished)) {
+    if (!isPredictionOpen(match.kickoffAt, match.isFinished, match.predictionLockOverride)) {
       return NextResponse.json({ error: "زمان پیش‌بینی این بازی تمام شده" }, { status: 400 });
     }
 

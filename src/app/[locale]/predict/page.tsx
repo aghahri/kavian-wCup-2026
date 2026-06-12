@@ -35,7 +35,9 @@ export default async function PredictPage({ params, searchParams }: PageProps) {
     orderBy: { kickoffAt: "asc" },
   });
 
-  const openMatches = matches.filter((m) => isPredictionOpen(m.kickoffAt, m.isFinished));
+  const openMatches = matches.filter((m) =>
+    isPredictionOpen(m.kickoffAt, m.isFinished, m.predictionLockOverride)
+  );
   const predictions = await prisma.prediction.findMany({ where: { userId: user.id } });
   const predictionMap = new Map(predictions.map((p) => [p.matchId, p]));
   const activeMatch =
@@ -85,8 +87,17 @@ export default async function PredictPage({ params, searchParams }: PageProps) {
               homeTeamFa={getHomeTeamName(activeMatch, locale)}
               awayTeamFa={getAwayTeamName(activeMatch, locale)}
               stage={getStageName(activeMatch, locale)}
+              kickoffAt={activeMatch.kickoffAt.toISOString()}
               initialHome={predictionMap.get(activeMatch.id)?.homeScore ?? 0}
               initialAway={predictionMap.get(activeMatch.id)?.awayScore ?? 0}
+              countdownLabels={{
+                closesIn: t("closesIn"),
+                closed: t("predictionClosed"),
+                days: t("countdownDays"),
+                hours: t("countdownHours"),
+                minutes: t("countdownMinutes"),
+                seconds: t("countdownSeconds"),
+              }}
               shareText={t("shareText")}
               shareUrl={`${getSiteUrl()}/${locale}/predict`}
               shareLabels={{

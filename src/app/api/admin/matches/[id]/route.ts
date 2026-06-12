@@ -30,6 +30,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       homeScore?: number | null;
       awayScore?: number | null;
       isFinished?: boolean;
+      predictionLockOverride?: string | null;
     } = {};
 
     if (body.homeTeam !== undefined) data.homeTeam = String(body.homeTeam).trim();
@@ -45,6 +46,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (body.homeScore !== undefined) data.homeScore = body.homeScore === null ? null : Number(body.homeScore);
     if (body.awayScore !== undefined) data.awayScore = body.awayScore === null ? null : Number(body.awayScore);
     if (body.isFinished !== undefined) data.isFinished = Boolean(body.isFinished);
+    if (body.predictionLockOverride !== undefined) {
+      const v = body.predictionLockOverride;
+      data.predictionLockOverride =
+        v === null || v === "" ? null : v === "open" || v === "closed" ? v : null;
+    }
 
     const match = await prisma.match.update({ where: { id }, data });
 

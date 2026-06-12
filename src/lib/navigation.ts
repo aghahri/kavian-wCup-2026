@@ -24,6 +24,7 @@ export const NAV_ITEMS: NavItemDef[] = [
   { id: "home", path: "", labelKey: "home", visibility: "public", header: true, footer: true, mobile: true },
   { id: "fixtures", path: "fixtures", labelKey: "fixtures", visibility: "public", header: true, footer: true, mobile: true },
   { id: "predict", path: "predict", labelKey: "predict", visibility: "public", header: true, footer: true, mobile: true },
+  { id: "daily", path: "daily", labelKey: "daily", visibility: "auth", header: true, footer: true, mobile: true },
   { id: "leaderboard", path: "leaderboard", labelKey: "leaderboard", visibility: "public", header: true, footer: true, mobile: true },
   { id: "leagues", path: "leagues", labelKey: "leagues", visibility: "public", header: true, footer: true, mobile: true },
   { id: "ai", path: "ai", labelKey: "ai", visibility: "public", header: true, footer: true, mobile: true },

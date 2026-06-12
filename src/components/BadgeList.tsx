@@ -15,6 +15,7 @@ const icons: Record<BadgeId, string> = {
   three_exact_scores: "🔥",
   league_founder: "👑",
   school_captain: "🏫",
+  daily_streak: "📅",
 };
 
 export function BadgeList({ badges, labels, size = "md" }: BadgeListProps) {

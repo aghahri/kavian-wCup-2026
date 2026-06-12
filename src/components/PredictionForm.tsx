@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
+import { PredictionCloseCountdown } from "@/components/PredictionCloseCountdown";
 import { ScoreInput } from "@/components/ScoreInput";
 import { ShareButtons } from "@/components/ShareButtons";
 import { TeamFlag } from "@/components/TeamFlag";
@@ -14,6 +15,15 @@ type PredictionFormProps = {
   homeTeamFa: string;
   awayTeamFa: string;
   stage: string;
+  kickoffAt?: string;
+  countdownLabels?: {
+    closesIn: string;
+    closed: string;
+    days: string;
+    hours: string;
+    minutes: string;
+    seconds: string;
+  };
   initialHome: number;
   initialAway: number;
   shareText?: string;
@@ -34,6 +44,8 @@ export function PredictionForm({
   homeTeamFa,
   awayTeamFa,
   stage,
+  kickoffAt,
+  countdownLabels,
   initialHome,
   initialAway,
   shareText,
@@ -98,6 +110,12 @@ export function PredictionForm({
           </div>
         </div>
       </div>
+
+      {kickoffAt && countdownLabels && (
+        <div className="mt-4">
+          <PredictionCloseCountdown kickoffIso={kickoffAt} labels={countdownLabels} />
+        </div>
+      )}
 
       <div className="flex items-center justify-center gap-6">
         <ScoreInput label={homeTeamFa} value={homeScore} onChange={setHomeScore} />

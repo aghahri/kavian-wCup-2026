@@ -62,6 +62,7 @@ export default async function LeaderboardPage({ params, searchParams }: PageProp
     three_exact_scores: tb("threeExactScores"),
     league_founder: tb("leagueFounder"),
     school_captain: tb("schoolCaptain"),
+    daily_streak: tb("dailyStreak"),
   };
 
   const periodLabels = {

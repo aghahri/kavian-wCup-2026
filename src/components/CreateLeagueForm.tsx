@@ -52,7 +52,7 @@ export function CreateLeagueForm({ locale, labels, defaultType = "friends" }: Cr
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      router.push(`/${locale}/leagues/${data.league.code}`);
+      router.push(`/${locale}/leagues/${data.league.code}/invite?created=1`);
     } catch {
       setError("Error");
     } finally {

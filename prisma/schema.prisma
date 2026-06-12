@@ -28,8 +28,12 @@ model User {
   badges                  UserBadge[]
   favoriteTeam            String?
   referralPoints          Int                      @default(0)
+  dailyStreak             Int                      @default(0)
+  lastDailyChallengeDate  String?
   ownedLeagues            PrivateLeague[]          @relation("LeagueOwner")
   leagueMemberships       PrivateLeagueMember[]
+  dailyEntries            DailyChallengeEntry[]
+  notificationPrefs       UserNotificationPrefs?
 
   @@index([referredById])
   @@index([createdAt])
@@ -81,26 +85,66 @@ model OtpChallenge {
 }
 
 model Match {
-  id                    String                 @id @default(cuid())
-  homeTeam              String
-  awayTeam              String
-  homeTeamFa            String
-  awayTeamFa            String
-  homeTeamAr            String?
-  awayTeamAr            String?
-  stage                 String
-  stageEn               String?
-  stageAr               String?
-  kickoffAt             DateTime
-  homeScore             Int?
-  awayScore             Int?
-  isFinished            Boolean                @default(false)
-  createdAt             DateTime               @default(now())
-  predictions           Prediction[]
-  tournamentPredictions TournamentPrediction[]
-  analysis              MatchAnalysis?
+  id                     String                 @id @default(cuid())
+  homeTeam               String
+  awayTeam               String
+  homeTeamFa             String
+  awayTeamFa             String
+  homeTeamAr             String?
+  awayTeamAr             String?
+  stage                  String
+  stageEn                String?
+  stageAr                String?
+  kickoffAt              DateTime
+  homeScore              Int?
+  awayScore              Int?
+  isFinished             Boolean                @default(false)
+  predictionLockOverride String?
+  createdAt              DateTime               @default(now())
+  predictions            Prediction[]
+  tournamentPredictions  TournamentPrediction[]
+  analysis               MatchAnalysis?
+  dailyChallenges        DailyChallenge[]
 
   @@index([kickoffAt])
+}
+
+model DailyChallenge {
+  id            String                @id @default(cuid())
+  matchId       String
+  challengeDate String
+  isActive      Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  match         Match                 @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  entries       DailyChallengeEntry[]
+
+  @@unique([challengeDate])
+  @@index([matchId])
+}
+
+model DailyChallengeEntry {
+  id            String         @id @default(cuid())
+  challengeId   String
+  userId        String
+  homeScore     Int
+  awayScore     Int
+  firstGoalTeam String
+  winnerPick    String
+  points        Int            @default(0)
+  createdAt     DateTime       @default(now())
+  challenge     DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+  @@index([userId])
+}
+
+model UserNotificationPrefs {
+  userId            String  @id
+  matchReminders    Boolean @default(true)
+  leagueUpdates     Boolean @default(true)
+  predictionResults Boolean @default(true)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PrivateLeague {
@@ -144,14 +188,17 @@ model PrivateLeagueInviteClick {
   id         String        @id @default(cuid())
   leagueId   String
   leagueCode String
+  userId     String?
   ipHash     String?
   userAgent  String?
   registered Boolean       @default(false)
+  joined     Boolean       @default(false)
   createdAt  DateTime      @default(now())
   league     PrivateLeague @relation(fields: [leagueId], references: [id], onDelete: Cascade)
 
   @@index([leagueCode])
   @@index([leagueId])
+  @@index([userId])
 }
 
 model MatchAnalysis {

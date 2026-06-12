@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { TeamFlag } from "@/components/TeamFlag";
+import { buildEngagementPicks } from "@/lib/ai/engagement-picks";
 import { getOrCreateMatchAnalysis } from "@/lib/match-analysis";
 import {
   formatAiPredictionLine,
@@ -52,6 +53,8 @@ export default async function AiPulsePage({ params }: PageProps) {
     .sort((a, b) => b.stats.wrongPct - a.stats.wrongPct)
     .slice(0, 4);
 
+  const engagement = await buildEngagementPicks(locale);
+
   function riskLabel(level: string) {
     const r = RISK_LABELS[level as keyof typeof RISK_LABELS];
     return locale === "fa" ? r.fa : locale === "ar" ? r.ar : r.en;
@@ -60,6 +63,40 @@ export default async function AiPulsePage({ params }: PageProps) {
   return (
     <div className="space-y-10">
       <PageHeader title={t("title")} subtitle={t("subtitle")} badge={t("badge")} />
+
+      {engagement && (
+        <section className="grid gap-4 sm:grid-cols-3">
+          {[
+            { key: "pickOfDay", pick: engagement.pickOfDay, label: t("pickOfDay"), icon: "⭐" },
+            { key: "upsetRisk", pick: engagement.upsetRisk, label: t("upsetRisk"), icon: "⚡" },
+            { key: "safest", pick: engagement.safest, label: t("safestPick"), icon: "🛡️" },
+          ].map(({ key, pick, label, icon }) => (
+            <Link
+              key={key}
+              href={`/${locale}/matches/${pick.match.id}/ai`}
+              className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-emerald-500/40"
+            >
+              <p className="text-xs font-semibold text-emerald-300">
+                {icon} {label}
+              </p>
+              <p className="mt-2 text-sm font-bold text-white">
+                {getHomeTeamName(pick.match, locale)} vs {getAwayTeamName(pick.match, locale)}
+              </p>
+              <p className="mt-2 text-lg font-black text-emerald-300">
+                {formatAiPredictionLine(
+                  pick.match,
+                  locale,
+                  pick.suggestedHomeScore,
+                  pick.suggestedAwayScore
+                )}
+              </p>
+              <p className="mt-1 text-xs text-white/50">
+                {t("risk")}: {pick.riskLabel}
+              </p>
+            </Link>
+          ))}
+        </section>
+      )}
 
       <section>
         <h2 className="mb-4 text-lg font-bold text-emerald-300">{t("upcomingSection")}</h2>

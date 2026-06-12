@@ -46,6 +46,10 @@ export default async function MatchSummaryPage({ params }: PageProps) {
         labels={{
           winner: t("winner"),
           exactPredictors: t("exactPredictors"),
+          surprise: t("surprise"),
+          exact: t("exact"),
+          wrong: t("wrong"),
+          total: t("total"),
           share: {
             share: t("shareResult"),
             telegram: ts("telegram"),

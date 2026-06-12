@@ -9,6 +9,7 @@ export const BADGE_IDS = [
   "three_exact_scores",
   "league_founder",
   "school_captain",
+  "daily_streak",
 ] as const;
 
 export type BadgeId = (typeof BADGE_IDS)[number];
@@ -18,7 +19,10 @@ const WC_2026_START = new Date("2026-06-11T00:00:00Z");
 export async function computeUserBadges(userId: string): Promise<BadgeId[]> {
   const [user, predictions, verifiedReferrals, topUsers, ownedLeagues, schoolLeagues] =
     await Promise.all([
-      prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { createdAt: true, dailyStreak: true },
+      }),
       prisma.prediction.findMany({
         where: { userId },
         select: { points: true },
@@ -44,6 +48,7 @@ export async function computeUserBadges(userId: string): Promise<BadgeId[]> {
   if (verifiedReferrals >= 5) badges.push("referral_champion");
   if (ownedLeagues >= 1) badges.push("league_founder");
   if (schoolLeagues >= 1) badges.push("school_captain");
+  if ((user.dailyStreak ?? 0) >= 3) badges.push("daily_streak");
 
   const ranked = topUsers
     .map((u) => ({

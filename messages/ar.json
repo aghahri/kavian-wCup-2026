@@ -13,6 +13,7 @@
     "fanMap": "خريطة المشجعين",
     "schools": "المدارس",
     "referrals": "الدعوات",
+    "daily": "التحدي اليومي",
     "tournaments": "البطولات",
     "profile": "الملف الشخصي",
     "admin": "الإدارة",
@@ -83,7 +84,13 @@
     "success": "تم حفظ توقعك بنجاح!",
     "yourPrediction": "توقعك: {home} - {away}",
     "pointsEarned": "({points} نقطة)",
-    "shareText": "توقعت للتو مباراة في كأس العالم 2026 على كافيان فوتبول!"
+    "shareText": "توقعت للتو مباراة في كأس العالم 2026 على كافيان فوتبول!",
+    "closesIn": "إغلاق التوقعات خلال",
+    "predictionClosed": "التوقعات مغلقة",
+    "countdownDays": "يوم",
+    "countdownHours": "ساعة",
+    "countdownMinutes": "دقيقة",
+    "countdownSeconds": "ثانية"
   },
   "match": {
     "vs": "VS",
@@ -151,7 +158,8 @@
     "perfectScore": "نتيجة دقيقة",
     "threeExactScores": "٣ نتائج دقيقة",
     "leagueFounder": "مؤسس الدوري",
-    "schoolCaptain": "قائد المدرسة"
+    "schoolCaptain": "قائد المدرسة",
+    "dailyStreak": "سلسلة يومية"
   },
   "share": {
     "title": "مشاركة",
@@ -258,7 +266,16 @@
     "opsOtpSuccess": "نجاح OTP اليوم",
     "opsRefreshAll": "تحديث كل إحصائيات المباريات",
     "opsRecentFinished": "مباريات منتهية مؤخراً",
-    "opsNoFinished": "لا مباريات منتهية بعد"
+    "opsNoFinished": "لا مباريات منتهية بعد",
+    "matchdayTitle": "عمليات يوم المباراة",
+    "matchdaySubtitle": "مباريات اليوم والنتائج وتحديث الذكاء",
+    "matchdayToday": "مباريات اليوم",
+    "matchdayMissing": "بدون نتيجة",
+    "matchdayNeedsAi": "تحتاج تحديث ذكاء",
+    "matchdayClosePredictions": "إغلاق توقعات المباريات المبدوءة",
+    "matchdayRefreshSummaries": "تحديث ملخصات المباريات المنتهية",
+    "matchdayTodayList": "جدول اليوم",
+    "matchdayNoToday": "لا مباريات اليوم"
   },
   "leagues": {
     "title": "الدوريات الخاصة",
@@ -288,6 +305,11 @@
     "back": "رجوع",
     "shareLeague": "انضم إلى {title}!",
     "inviteTitle": "رابط دعوة الدوري",
+    "inviteCreatedTitle": "تم إنشاء دوريك!",
+    "inviteReward": "ادعُ أصدقاءك واكسب نقاطاً",
+    "inviteClicks": "نقرات الدعوة",
+    "inviteJoins": "انضمام عبر الدعوة",
+    "goToLeague": "الذهاب للدوري",
     "inviteDesc": "شارك هذا الرابط مع العائلة والأصدقاء",
     "copyLink": "نسخ الرابط",
     "copied": "تم النسخ!",
@@ -329,14 +351,55 @@
     "awayWin": "فوز الضيف",
     "reasoning": "التحليل",
     "lesson": "درس هذه المباراة",
-    "viewDetail": "التفاصيل"
+    "viewDetail": "التفاصيل",
+    "pickOfDay": "اختيار الذكاء اليومي",
+    "upsetRisk": "أعلى مخاطرة مفاجأة",
+    "safestPick": "أأمن توقع"
   },
   "summary": {
     "back": "المباريات",
     "winner": "الفائز",
     "exactPredictors": "توقعات دقيقة",
     "shareText": "{home} {score} {away} — ملخص مباراة كافيان فوتبول",
-    "shareResult": "شارك هذه النتيجة"
+    "shareResult": "شارك هذه النتيجة",
+    "surprise": "مستوى المفاجأة",
+    "exact": "دقيق",
+    "wrong": "خطأ",
+    "total": "الإجمالي"
+  },
+  "daily": {
+    "title": "تحدي التوقع اليومي",
+    "subtitle": "توقع النتيجة وفريق الهدف الأول والفائز",
+    "badge": "يومي",
+    "empty": "لا مباراة لتحدي اليوم",
+    "score": "توقع النتيجة",
+    "firstGoal": "فريق الهدف الأول",
+    "winner": "الفائز",
+    "firstHome": "المضيف",
+    "firstAway": "الضيف",
+    "firstNone": "بدون أهداف",
+    "winDraw": "تعادل",
+    "submit": "إرسال تحدي اليوم",
+    "submitting": "جارٍ الإرسال...",
+    "success": "تم حفظ تحدي اليوم!",
+    "closed": "تحدي اليوم مغلق",
+    "versus": "ضد",
+    "leaderboard": "جدول تحدي اليوم",
+    "leaderboardEmpty": "لا مشاركات بعد",
+    "pts": "نقطة",
+    "streak": "سلسلة {count} أيام",
+    "viewGlobal": "الترتيب العام"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "subtitle": "إدارة تفضيلات الإشعارات",
+    "matchReminders": "تذكير المباريات",
+    "leagueUpdates": "تحديثات الدوري",
+    "predictionResults": "نتائج التوقعات",
+    "save": "حفظ التفضيلات",
+    "saving": "جارٍ الحفظ...",
+    "saved": "تم الحفظ",
+    "comingSoon": "الإشعارات الفعلية قريباً"
   },
   "fans": {
     "title": "خريطة مشجعي كافيان العالمية",

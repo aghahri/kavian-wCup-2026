@@ -1,5 +1,6 @@
 import { regenerateMatchAnalysis } from "@/lib/match-analysis";
 import { syncUserBadges } from "@/lib/badges";
+import { scoreDailyChallengeForMatch } from "@/lib/daily-challenge";
 import { prisma } from "@/lib/prisma";
 import { calculatePoints } from "@/lib/scoring";
 
@@ -41,6 +42,7 @@ export async function refreshMatchAfterScoreUpdate(matchId: string): Promise<voi
   }
 
   await regenerateMatchAnalysis(match);
+  await scoreDailyChallengeForMatch(matchId);
 
   const uniqueUsers = [...new Set(affectedUserIds)];
   await Promise.all(uniqueUsers.map((userId) => syncUserBadges(userId)));
