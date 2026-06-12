@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/contexts/CurrentUserProvider";
 import type { Locale } from "@/i18n/routing";
 
 type LogoutButtonProps = {
@@ -10,8 +11,10 @@ type LogoutButtonProps = {
 
 export function LogoutButton({ locale, label }: LogoutButtonProps) {
   const router = useRouter();
+  const { clearUser } = useCurrentUser();
 
   async function handleLogout() {
+    clearUser();
     await fetch("/api/auth/logout", {
       method: "POST",
       cache: "no-store",

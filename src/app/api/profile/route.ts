@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { NO_STORE_HEADERS } from "@/lib/api-headers";
 import { getCurrentUser } from "@/lib/auth";
+import { toClientUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -40,8 +41,7 @@ export async function PATCH(request: Request) {
   const updated = await prisma.user.update({
     where: { id: user.id },
     data: { name },
-    select: { id: true, name: true, avatarUrl: true },
   });
 
-  return NextResponse.json({ user: updated }, { headers: NO_STORE_HEADERS });
+  return NextResponse.json({ user: toClientUser(updated) }, { headers: NO_STORE_HEADERS });
 }

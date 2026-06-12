@@ -18,6 +18,7 @@ model User {
   isVip                   Boolean                  @default(false)
   vipUntil                DateTime?
   createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @default(now()) @updatedAt
   predictions             Prediction[]
   tournamentMemberships   TournamentMembership[]
   tournamentPredictions   TournamentPrediction[]

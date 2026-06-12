@@ -10,6 +10,7 @@ import {
   getCountryName,
   isIranDialCode,
 } from "@/lib/countries";
+import { useCurrentUser } from "@/contexts/CurrentUserProvider";
 import { formatPhoneForApi } from "@/lib/phone";
 import { buildFlagcdnUrl } from "@/lib/teams";
 import type { Locale } from "@/i18n/routing";
@@ -22,6 +23,7 @@ export function LoginForm() {
   const router = useRouter();
   const params = useParams();
   const locale = (params.locale as Locale) ?? "fa";
+  const { refreshUser } = useCurrentUser();
 
   const [step, setStep] = useState<Step>("phone");
   const [countryDial, setCountryDial] = useState(DEFAULT_DIAL_CODE);
@@ -112,6 +114,7 @@ export function LoginForm() {
         return;
       }
 
+      await refreshUser();
       router.refresh();
 
       if (data.user?.isAdmin) {

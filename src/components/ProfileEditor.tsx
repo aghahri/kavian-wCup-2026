@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useCurrentUser } from "@/contexts/CurrentUserProvider";
 import { UserAvatar } from "@/components/UserAvatar";
 
 type ProfileEditorProps = {
-  user: { id: string; name: string; avatarUrl: string | null };
+  user: { id: string; name: string; avatarUrl: string | null; updatedAt?: string | Date };
   labels: {
     name: string;
     avatar: string;
@@ -16,11 +17,17 @@ type ProfileEditorProps = {
   };
 };
 
-export function ProfileEditor({ user, labels }: ProfileEditorProps) {
+export function ProfileEditor({ user: initialUser, labels }: ProfileEditorProps) {
   const router = useRouter();
+  const { user: clientUser, refreshUser } = useCurrentUser();
+  const user = clientUser ?? initialUser;
   const [name, setName] = useState(user.name);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    setName(user.name);
+  }, [user.name]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -30,9 +37,12 @@ export function ProfileEditor({ user, labels }: ProfileEditorProps) {
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        credentials: "same-origin",
         body: JSON.stringify({ name }),
       });
       if (!res.ok) throw new Error("fail");
+      await refreshUser();
       setMessage(labels.success);
       router.refresh();
     } catch {
@@ -48,8 +58,14 @@ export function ProfileEditor({ user, labels }: ProfileEditorProps) {
     form.append("avatar", file);
     setLoading(true);
     try {
-      const res = await fetch("/api/profile/avatar", { method: "POST", body: form });
+      const res = await fetch("/api/profile/avatar", {
+        method: "POST",
+        body: form,
+        cache: "no-store",
+        credentials: "same-origin",
+      });
       if (!res.ok) throw new Error("fail");
+      await refreshUser();
       router.refresh();
     } catch {
       setMessage(labels.error);

@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { BadgeList } from "@/components/BadgeList";
 import { ProfileEditor } from "@/components/ProfileEditor";
+import { ProfileHero } from "@/components/ProfileHero";
 import { ReferralBanner } from "@/components/ReferralBanner";
 import { ShareButtons } from "@/components/ShareButtons";
-import { UserAvatar } from "@/components/UserAvatar";
 import { syncUserBadges } from "@/lib/badges";
 import { formatDate, formatNumber } from "@/lib/format";
 import { getUserRank } from "@/lib/leaderboard";
@@ -60,26 +59,20 @@ export default async function ProfilePage({ params }: PageProps) {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <UserAvatar user={user} size={80} />
-          <div>
-            <h1 className="text-2xl font-black text-white">{user.name}</h1>
-            <p className="mt-1 text-sm text-white/60">
-              {t("joined", { date: formatDate(user.createdAt, locale) })}
-            </p>
-            <div className="mt-2">
-              <BadgeList badges={badges} labels={badgeLabels} />
-            </div>
-          </div>
-        </div>
-        <Link
-          href={`/${locale}/predict`}
-          className="rounded-xl bg-emerald-500 px-5 py-3 text-center text-sm font-bold text-white hover:bg-emerald-400"
-        >
-          {t("predictNow")}
-        </Link>
-      </div>
+      <ProfileHero
+        locale={locale}
+        joinedLabel={t("joined", { date: formatDate(user.createdAt, locale) })}
+        predictLabel={t("predictNow")}
+        badges={badges}
+        badgeLabels={badgeLabels}
+        fallback={{
+          id: user.id,
+          name: user.name,
+          avatarUrl: user.avatarUrl,
+          updatedAt: user.updatedAt,
+          createdAt: user.createdAt,
+        }}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[

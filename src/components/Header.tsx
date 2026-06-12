@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { HeaderAdminLink, HeaderAuth } from "@/components/HeaderAuth";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { LogoutButton } from "@/components/LogoutButton";
-import { UserAvatar } from "@/components/UserAvatar";
-import { getCurrentUser } from "@/lib/auth";
 import type { Locale } from "@/i18n/routing";
 
 type HeaderProps = {
@@ -11,7 +9,6 @@ type HeaderProps = {
 };
 
 export async function Header({ locale }: HeaderProps) {
-  const user = await getCurrentUser();
   const t = await getTranslations("nav");
 
   const links = [
@@ -21,6 +18,13 @@ export async function Header({ locale }: HeaderProps) {
     { href: `/${locale}/leaderboard`, label: t("leaderboard") },
     { href: `/${locale}/tournaments`, label: t("tournaments") },
   ];
+
+  const authLabels = {
+    login: t("login"),
+    logout: t("logout"),
+    profile: t("profile"),
+    admin: t("admin"),
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b1f3a]/95 backdrop-blur-md">
@@ -45,37 +49,12 @@ export async function Header({ locale }: HeaderProps) {
               {link.label}
             </Link>
           ))}
-          {user?.isAdmin && (
-            <Link
-              href={`/${locale}/admin`}
-              className="rounded-lg bg-amber-500/20 px-3 py-2 text-sm font-medium text-amber-200 transition hover:bg-amber-500/30"
-            >
-              {t("admin")}
-            </Link>
-          )}
+          <HeaderAdminLink locale={locale} label={t("admin")} />
         </nav>
 
         <div className="flex shrink-0 items-center gap-2">
           <LanguageSwitcher locale={locale} />
-          {user ? (
-            <>
-              <Link
-                href={`/${locale}/profile`}
-                className="hidden items-center gap-2 rounded-lg px-2 py-1 transition hover:bg-white/10 md:flex"
-              >
-                <UserAvatar user={user} size={28} />
-                <span className="max-w-[8rem] truncate text-sm text-white/80">{user.name}</span>
-              </Link>
-              <LogoutButton locale={locale} label={t("logout")} />
-            </>
-          ) : (
-            <Link
-              href={`/${locale}/login`}
-              className="rounded-lg bg-emerald-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-400"
-            >
-              {t("login")}
-            </Link>
-          )}
+          <HeaderAuth locale={locale} labels={authLabels} variant="desktop" />
         </div>
       </div>
 
@@ -89,22 +68,7 @@ export async function Header({ locale }: HeaderProps) {
             {link.label}
           </Link>
         ))}
-        {user && (
-          <Link
-            href={`/${locale}/profile`}
-            className="shrink-0 rounded-lg bg-white/5 px-3 py-2 text-xs text-white/90"
-          >
-            {t("profile")}
-          </Link>
-        )}
-        {user?.isAdmin && (
-          <Link
-            href={`/${locale}/admin`}
-            className="shrink-0 rounded-lg bg-amber-500/20 px-3 py-2 text-xs text-amber-200"
-          >
-            {t("admin")}
-          </Link>
-        )}
+        <HeaderAuth locale={locale} labels={authLabels} variant="mobile" />
       </nav>
     </header>
   );

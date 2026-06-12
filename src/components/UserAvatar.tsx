@@ -3,13 +3,17 @@
 import { resolveAvatarUrl } from "@/lib/avatar";
 
 type UserAvatarProps = {
-  user: { id: string; name: string; avatarUrl?: string | null };
+  user: { id: string; name: string; avatarUrl?: string | null; updatedAt?: string | Date };
   size?: number;
   className?: string;
 };
 
 export function UserAvatar({ user, size = 40, className = "" }: UserAvatarProps) {
-  const src = resolveAvatarUrl({ id: user.id, avatarUrl: user.avatarUrl ?? null });
+  const src = resolveAvatarUrl({
+    id: user.id,
+    avatarUrl: user.avatarUrl ?? null,
+    updatedAt: user.updatedAt,
+  });
   const initial = user.name.trim().charAt(0).toUpperCase() || "?";
 
   return (
@@ -19,6 +23,7 @@ export function UserAvatar({ user, size = 40, className = "" }: UserAvatarProps)
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        key={src}
         src={src}
         alt={user.name}
         width={size}
