@@ -26,6 +26,10 @@ model User {
   referrals               User[]                   @relation("UserReferrals")
   referralClicks          ReferralClick[]
   badges                  UserBadge[]
+  favoriteTeam            String?
+  referralPoints          Int                      @default(0)
+  ownedLeagues            PrivateLeague[]          @relation("LeagueOwner")
+  leagueMemberships       PrivateLeagueMember[]
 
   @@index([referredById])
   @@index([createdAt])
@@ -94,8 +98,78 @@ model Match {
   createdAt             DateTime               @default(now())
   predictions           Prediction[]
   tournamentPredictions TournamentPrediction[]
+  analysis              MatchAnalysis?
 
   @@index([kickoffAt])
+}
+
+model PrivateLeague {
+  id           String                   @id @default(cuid())
+  code         String                   @unique
+  title        String
+  description  String?
+  type         String                   @default("friends")
+  privacy      String                   @default("private")
+  logoUrl      String?
+  schoolName   String?
+  schoolGrade  String?
+  isActive     Boolean                  @default(true)
+  isFeatured   Boolean                  @default(false)
+  ownerId      String
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @default(now()) @updatedAt
+  owner        User                     @relation("LeagueOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members      PrivateLeagueMember[]
+  inviteClicks PrivateLeagueInviteClick[]
+
+  @@index([ownerId])
+  @@index([type])
+  @@index([isActive])
+}
+
+model PrivateLeagueMember {
+  id       String        @id @default(cuid())
+  leagueId String
+  userId   String
+  role     String        @default("member")
+  joinedAt DateTime      @default(now())
+  league   PrivateLeague @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([leagueId, userId])
+  @@index([userId])
+}
+
+model PrivateLeagueInviteClick {
+  id         String        @id @default(cuid())
+  leagueId   String
+  leagueCode String
+  ipHash     String?
+  userAgent  String?
+  registered Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  league     PrivateLeague @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+
+  @@index([leagueCode])
+  @@index([leagueId])
+}
+
+model MatchAnalysis {
+  id                 String   @id @default(cuid())
+  matchId            String   @unique
+  homeWinPct         Int
+  drawPct            Int
+  awayWinPct         Int
+  riskLevel          String
+  suggestedHomeScore Int
+  suggestedAwayScore Int
+  reasoningFa        String
+  reasoningEn        String?
+  reasoningAr        String?
+  isPinned           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+  match              Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
 }
 
 model Prediction {

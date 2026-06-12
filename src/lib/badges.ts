@@ -5,6 +5,10 @@ export const BADGE_IDS = [
   "top_predictor",
   "referral_champion",
   "world_cup_expert",
+  "perfect_score",
+  "three_exact_scores",
+  "league_founder",
+  "school_captain",
 ] as const;
 
 export type BadgeId = (typeof BADGE_IDS)[number];
@@ -12,17 +16,20 @@ export type BadgeId = (typeof BADGE_IDS)[number];
 const WC_2026_START = new Date("2026-06-11T00:00:00Z");
 
 export async function computeUserBadges(userId: string): Promise<BadgeId[]> {
-  const [user, predictions, verifiedReferrals, topUsers] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } }),
-    prisma.prediction.findMany({
-      where: { userId },
-      select: { points: true },
-    }),
-    prisma.user.count({ where: { referredById: userId } }),
-    prisma.user.findMany({
-      select: { id: true, predictions: { select: { points: true } } },
-    }),
-  ]);
+  const [user, predictions, verifiedReferrals, topUsers, ownedLeagues, schoolLeagues] =
+    await Promise.all([
+      prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } }),
+      prisma.prediction.findMany({
+        where: { userId },
+        select: { points: true },
+      }),
+      prisma.user.count({ where: { referredById: userId } }),
+      prisma.user.findMany({
+        select: { id: true, predictions: { select: { points: true } } },
+      }),
+      prisma.privateLeague.count({ where: { ownerId: userId } }),
+      prisma.privateLeague.count({ where: { ownerId: userId, type: "school" } }),
+    ]);
 
   if (!user) return [];
 
@@ -32,7 +39,11 @@ export async function computeUserBadges(userId: string): Promise<BadgeId[]> {
 
   if (user.createdAt < WC_2026_START) badges.push("early_supporter");
   if (exactScores >= 10) badges.push("world_cup_expert");
+  if (exactScores >= 1) badges.push("perfect_score");
+  if (exactScores >= 3) badges.push("three_exact_scores");
   if (verifiedReferrals >= 5) badges.push("referral_champion");
+  if (ownedLeagues >= 1) badges.push("league_founder");
+  if (schoolLeagues >= 1) badges.push("school_captain");
 
   const ranked = topUsers
     .map((u) => ({
@@ -61,4 +72,12 @@ export async function syncUserBadges(userId: string): Promise<BadgeId[]> {
     });
   }
   return badges;
+}
+
+export async function getUserBadges(userId: string): Promise<BadgeId[]> {
+  const rows = await prisma.userBadge.findMany({
+    where: { userId },
+    select: { badge: true },
+  });
+  return rows.map((r) => r.badge as BadgeId);
 }

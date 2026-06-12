@@ -40,6 +40,8 @@ export default async function AdminPage({ params }: PageProps) {
     { href: `/${locale}/admin/tournaments`, title: t("tournaments"), desc: t("tournamentsDesc") },
     { href: `/${locale}/admin/otp`, title: t("otp"), desc: t("otpDesc") },
     { href: `/${locale}/admin/referrals`, title: t("referrals"), desc: t("referralsDesc") },
+    { href: `/${locale}/admin/leagues`, title: t("leagues"), desc: t("leaguesDesc") },
+    { href: `/${locale}/admin/fans`, title: t("fans"), desc: t("fansDesc") },
   ];
 
   const v2Stats = [

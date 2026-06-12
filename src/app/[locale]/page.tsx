@@ -128,6 +128,12 @@ export default async function HomePage({ params }: PageProps) {
             {t("startPredict")}
           </Link>
           <Link
+            href={`/${locale}/leagues/create`}
+            className="rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-amber-400"
+          >
+            {t("createFamilyLeague")}
+          </Link>
+          <Link
             href={`/${locale}/leaderboard`}
             className="rounded-xl border border-white/20 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
           >
@@ -232,6 +238,10 @@ export default async function HomePage({ params }: PageProps) {
               top_predictor: "",
               referral_champion: "",
               world_cup_expert: "",
+              perfect_score: "",
+              three_exact_scores: "",
+              league_founder: "",
+              school_captain: "",
             }}
             showProfileLink={false}
           />

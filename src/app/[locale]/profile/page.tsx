@@ -62,6 +62,10 @@ export default async function ProfilePage({ params }: PageProps) {
     top_predictor: tb("topPredictor"),
     referral_champion: tb("referralChampion"),
     world_cup_expert: tb("worldCupExpert"),
+    perfect_score: tb("perfectScore"),
+    three_exact_scores: tb("threeExactScores"),
+    league_founder: tb("leagueFounder"),
+    school_captain: tb("schoolCaptain"),
   };
 
   return (
@@ -117,13 +121,21 @@ export default async function ProfilePage({ params }: PageProps) {
         </Link>
       </section>
 
-      <ReferralBanner
-        referralUrl={referralUrl}
-        title={t("referralTitle")}
-        description={t("referralDesc")}
-        copyLabel={t("copyLink")}
-        copiedLabel={t("copied")}
-      />
+      <div className="space-y-3">
+        <ReferralBanner
+          referralUrl={referralUrl}
+          title={t("referralTitle")}
+          description={t("referralDesc")}
+          copyLabel={t("copyLink")}
+          copiedLabel={t("copied")}
+        />
+        <Link
+          href={`/${locale}/referrals`}
+          className="block text-center text-sm text-emerald-300 hover:underline"
+        >
+          {t("referralStats")} →
+        </Link>
+      </div>
 
       <ShareButtons
         text={t("shareProfileText", { name: user.name })}

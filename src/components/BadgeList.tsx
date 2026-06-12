@@ -11,6 +11,10 @@ const icons: Record<BadgeId, string> = {
   top_predictor: "🏆",
   referral_champion: "🤝",
   world_cup_expert: "⚽",
+  perfect_score: "🎯",
+  three_exact_scores: "🔥",
+  league_founder: "👑",
+  school_captain: "🏫",
 };
 
 export function BadgeList({ badges, labels, size = "md" }: BadgeListProps) {

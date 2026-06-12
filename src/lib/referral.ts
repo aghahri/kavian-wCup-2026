@@ -40,6 +40,77 @@ export async function attachReferralToNewUser(userId: string): Promise<void> {
     where: { referralCode: code, registered: false },
     data: { registered: true, verified: true },
   });
+
+  await prisma.user.update({
+    where: { id: referrer.id },
+    data: { referralPoints: { increment: 10 } },
+  });
+}
+
+export async function getReferralStats(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { referralCode: true, referralPoints: true },
+  });
+  if (!user?.referralCode) {
+    return { clicks: 0, registrations: 0, verified: 0, referralPoints: 0, inviteScore: 0 };
+  }
+
+  const [clicks, registrations, verified, referrals] = await Promise.all([
+    prisma.referralClick.count({ where: { referralCode: user.referralCode } }),
+    prisma.referralClick.count({
+      where: { referralCode: user.referralCode, registered: true },
+    }),
+    prisma.referralClick.count({
+      where: { referralCode: user.referralCode, verified: true },
+    }),
+    prisma.user.count({ where: { referredById: userId } }),
+  ]);
+
+  const inviteScore = user.referralPoints + verified * 5 + referrals * 10;
+
+  return {
+    clicks,
+    registrations,
+    verified,
+    referrals,
+    referralPoints: user.referralPoints,
+    inviteScore,
+  };
+}
+
+export async function buildReferralLeaderboard(limit = 20) {
+  const users = await prisma.user.findMany({
+    where: { referralCode: { not: null } },
+    select: {
+      id: true,
+      name: true,
+      avatarUrl: true,
+      referralPoints: true,
+      referralCode: true,
+      _count: { select: { referrals: true } },
+    },
+  });
+
+  const withScores = await Promise.all(
+    users.map(async (u) => {
+      const stats = await getReferralStats(u.id);
+      return {
+        userId: u.id,
+        name: u.name,
+        avatarUrl: u.avatarUrl,
+        inviteScore: stats.inviteScore,
+        verified: stats.verified,
+        referrals: u._count.referrals,
+      };
+    })
+  );
+
+  return withScores
+    .filter((u) => u.inviteScore > 0 || u.referrals > 0)
+    .sort((a, b) => b.inviteScore - a.inviteScore || b.referrals - a.referrals)
+    .slice(0, limit)
+    .map((row, i) => ({ ...row, rank: i + 1 }));
 }
 
 export async function ensureUserReferralCode(userId: string): Promise<string> {

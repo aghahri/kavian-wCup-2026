@@ -15,8 +15,9 @@ export async function Header({ locale }: HeaderProps) {
     { href: `/${locale}`, label: t("home") },
     { href: `/${locale}/fixtures`, label: t("fixtures") },
     { href: `/${locale}/predict`, label: t("predict") },
+    { href: `/${locale}/leagues`, label: t("leagues") },
     { href: `/${locale}/leaderboard`, label: t("leaderboard") },
-    { href: `/${locale}/tournaments`, label: t("tournaments") },
+    { href: `/${locale}/ai`, label: t("ai") },
   ];
 
   const authLabels = {

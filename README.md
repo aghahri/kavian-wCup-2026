@@ -8,7 +8,14 @@ Persian-first World Cup 2026 prediction site for Kavian. Supports **fa / en / ar
 - RTL for Persian & Arabic, LTR for English
 - Fixtures, predictions, leaderboard
 - SMS OTP login via Samantel (phone verification)
-- Admin: matches, predictions, **language overrides**, **tournaments**, **ads & prizes**, **payment settings placeholder**
+- **Private leagues** — family, friends, school, company (`/{locale}/leagues`, invite `/l/{code}`)
+- **Football AI Pulse** — deterministic match analysis (`/{locale}/ai`)
+- **Match summary cards** — shareable post-match recap (`/{locale}/matches/[id]/summary`)
+- **Referral leaderboard** — invite score, clicks, verified signups (`/{locale}/referrals`)
+- **Global fan map** — users by phone country (`/{locale}/fans/map`)
+- **Achievements** — badges on profile and leaderboard
+- **School competition** — school leagues (`/{locale}/schools`)
+- Admin: matches, predictions, **language overrides**, **tournaments**, **ads & prizes**, **leagues**, **fans**
 - Free & VIP prediction tournaments (skill-based, sponsored prizes only)
 - SQLite + Prisma for MVP
 
@@ -56,6 +63,12 @@ OTP_DEV_BYPASS=false
 | Predict | `/{locale}/predict` |
 | Leaderboard | `/{locale}/leaderboard` |
 | Tournaments | `/{locale}/tournaments` |
+| Private leagues | `/{locale}/leagues` |
+| AI Pulse | `/{locale}/ai` |
+| Fan map | `/{locale}/fans/map` |
+| Schools | `/{locale}/schools` |
+| Referrals | `/{locale}/referrals` |
+| League invite | `/l/{code}` |
 | Admin | `/{locale}/admin` |
 
 ## Monetization (safe)
