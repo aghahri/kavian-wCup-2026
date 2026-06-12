@@ -10,6 +10,7 @@ import {
   getCountryName,
   isIranDialCode,
 } from "@/lib/countries";
+import { formatPhoneForApi } from "@/lib/phone";
 import { buildFlagcdnUrl } from "@/lib/teams";
 import type { Locale } from "@/i18n/routing";
 
@@ -25,6 +26,7 @@ export function LoginForm() {
   const [step, setStep] = useState<Step>("phone");
   const [countryDial, setCountryDial] = useState(DEFAULT_DIAL_CODE);
   const [phone, setPhone] = useState("");
+  const [submittedPhone, setSubmittedPhone] = useState("");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [needsName, setNeedsName] = useState(false);
@@ -33,6 +35,12 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const iranSelected = isIranDialCode(countryDial);
+
+  function mapRequestOtpError(status: number, data: { errorCode?: string }) {
+    if (data.errorCode === "IRAN_OTP_ONLY") return t("iranOtpOnly");
+    if (status === 429) return t("rateLimitError");
+    return t("sendOtpFailed");
+  }
 
   async function handleRequestOtp(event: FormEvent) {
     event.preventDefault();
@@ -43,25 +51,23 @@ export function LoginForm() {
       return;
     }
 
+    const apiPhone = formatPhoneForApi(countryDial, phone);
     setLoading(true);
 
     try {
       const response = await fetch("/api/auth/request-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, countryDial }),
+        body: JSON.stringify({ phone: apiPhone, countryDial }),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        if (data.errorCode === "IRAN_OTP_ONLY") {
-          setError(t("iranOtpOnly"));
-        } else {
-          setError(data.error ?? te("network"));
-        }
+        setError(mapRequestOtpError(response.status, data));
         return;
       }
 
+      setSubmittedPhone(apiPhone);
       setPhoneMask(data.phoneMask ?? "");
       setStep("otp");
     } catch {
@@ -81,7 +87,7 @@ export function LoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phone,
+          phone: submittedPhone,
           countryDial,
           code,
           name: needsName ? name : undefined,
@@ -148,19 +154,18 @@ export function LoginForm() {
 
             <label className="block">
               <span className="mb-2 block text-sm text-white/80">{t("phone")}</span>
-              <div className="flex gap-2" dir="ltr">
-                <span className="flex shrink-0 items-center rounded-xl border border-white/20 bg-black/40 px-3 text-sm text-white/70">
-                  +{countryDial}
-                </span>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder={iranSelected ? t("phonePlaceholder") : t("phonePlaceholderIntl")}
-                  required
-                  className="min-w-0 flex-1 rounded-xl border border-white/20 bg-black/30 px-4 py-3 text-white outline-none focus:border-emerald-400"
-                />
-              </div>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder={iranSelected ? t("phonePlaceholder") : t("phonePlaceholderIntl")}
+                required
+                dir="ltr"
+                className="w-full rounded-xl border border-white/20 bg-black/30 px-4 py-3 text-white outline-none focus:border-emerald-400"
+              />
+              {iranSelected && (
+                <p className="mt-2 text-xs leading-6 text-white/50">{t("phoneHelper")}</p>
+              )}
             </label>
 
             {!iranSelected && (

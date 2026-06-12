@@ -51,7 +51,10 @@ export async function POST(request: Request) {
     });
 
     if (recent) {
-      return NextResponse.json({ error: GENERIC_ERROR }, { status: 429 });
+      return NextResponse.json(
+        { error: GENERIC_ERROR, errorCode: "RATE_LIMIT" },
+        { status: 429 }
+      );
     }
 
     const code = generateOtpCode();

@@ -33,14 +33,35 @@ export function normalizeInternationalPhone(dialCode: string, phone: string): st
   return `+${dialCode}${digits}`;
 }
 
+/** Iran E.164 for API submit: +989XXXXXXXXX */
+export function toIranE164(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (/^98\d{10}$/.test(digits)) {
+    return `+${digits}`;
+  }
+  const domestic = normalizeIranPhone(phone);
+  if (/^09\d{9}$/.test(domestic)) {
+    return `+98${domestic.slice(1)}`;
+  }
+  return phone.trim().startsWith("+") ? phone.trim() : `+${digits}`;
+}
+
 /**
- * Normalize phone from login form.
- * Iran (98) -> 09XXXXXXXXX
+ * Normalize phone from login/API input.
+ * Iran (98) -> 09XXXXXXXXX (DB storage)
  * Others -> +{dialCode}{nationalNumber}
  */
 export function normalizePhoneInput(dialCode: string, phone: string): string {
   if (isIranDialCode(dialCode)) {
     return normalizeIranPhone(phone);
+  }
+  return normalizeInternationalPhone(dialCode, phone);
+}
+
+/** Format login submit payload phone field */
+export function formatPhoneForApi(dialCode: string, phone: string): string {
+  if (isIranDialCode(dialCode)) {
+    return toIranE164(phone);
   }
   return normalizeInternationalPhone(dialCode, phone);
 }
