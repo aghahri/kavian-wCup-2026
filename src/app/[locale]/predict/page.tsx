@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PredictionForm } from "@/components/PredictionForm";
+import { TeamFlag } from "@/components/TeamFlag";
 import { getCurrentUser } from "@/lib/auth";
 import { isPredictionOpen } from "@/lib/format";
 import { getAwayTeamName, getHomeTeamName, getStageName } from "@/lib/match-i18n";
@@ -60,13 +61,17 @@ export default async function PredictPage({ params, searchParams }: PageProps) {
               <Link
                 key={match.id}
                 href={`/${locale}/predict?match=${match.id}`}
-                className={`shrink-0 rounded-xl px-4 py-2 text-sm transition ${
+                className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm transition ${
                   activeMatch?.id === match.id
                     ? "bg-emerald-500 text-white"
                     : "bg-white/10 text-white/80 hover:bg-white/15"
                 }`}
               >
-                {getHomeTeamName(match, locale)} - {getAwayTeamName(match, locale)}
+                <TeamFlag teamName={match.homeTeam} size={18} />
+                <span>{getHomeTeamName(match, locale)}</span>
+                <span className="opacity-50">-</span>
+                <TeamFlag teamName={match.awayTeam} size={18} />
+                <span>{getAwayTeamName(match, locale)}</span>
               </Link>
             ))}
           </div>
@@ -74,6 +79,8 @@ export default async function PredictPage({ params, searchParams }: PageProps) {
           {activeMatch && (
             <PredictionForm
               matchId={activeMatch.id}
+              homeTeam={activeMatch.homeTeam}
+              awayTeam={activeMatch.awayTeam}
               homeTeamFa={getHomeTeamName(activeMatch, locale)}
               awayTeamFa={getAwayTeamName(activeMatch, locale)}
               stage={getStageName(activeMatch, locale)}

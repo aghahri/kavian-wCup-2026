@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { isIranDialCode } from "@/lib/countries";
 import {
   maskPhone,
   isValidIranMobile,
   isValidSmsRecipient,
-  normalizePhone,
+  normalizePhoneInput,
   normalizeSmsRecipient,
 } from "@/lib/phone";
 import {
@@ -19,11 +20,21 @@ import { prisma } from "@/lib/prisma";
 import { sendSamantelSms } from "@/lib/samantel-sms";
 
 const GENERIC_ERROR = "درخواست نامعتبر است. لطفاً بعداً تلاش کنید.";
+const IRAN_OTP_ONLY = "فعلاً ورود پیامکی فقط برای شماره‌های ایران فعال است.";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const phone = normalizePhone(String(body.phone ?? ""));
+    const countryDial = String(body.countryDial ?? "98").replace(/\D/g, "");
+
+    if (!isIranDialCode(countryDial)) {
+      return NextResponse.json(
+        { error: IRAN_OTP_ONLY, errorCode: "IRAN_OTP_ONLY" },
+        { status: 400 }
+      );
+    }
+
+    const phone = normalizePhoneInput(countryDial, String(body.phone ?? ""));
     const smsRecipient = normalizeSmsRecipient(phone);
 
     if (!isValidIranMobile(phone) || !isValidSmsRecipient(smsRecipient)) {

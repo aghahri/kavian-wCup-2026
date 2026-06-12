@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { isValidIranMobile, maskPhone, normalizePhone } from "@/lib/phone";
+import { isIranDialCode } from "@/lib/countries";
+import { isValidIranMobile, maskPhone, normalizePhoneInput } from "@/lib/phone";
 import {
   isOtpDevBypass,
   OTP_DEV_CODE,
@@ -74,13 +75,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const phone = normalizePhone(String(body.phone ?? ""));
+    const countryDial = String(body.countryDial ?? "98").replace(/\D/g, "");
+    const phone = normalizePhoneInput(countryDial, String(body.phone ?? ""));
     const code = String(body.code ?? "").trim();
     const name = String(body.name ?? "").trim();
 
     debug.phone = phone;
 
-    if (!isValidIranMobile(phone) || !/^\d{6}$/.test(code)) {
+    if (!isIranDialCode(countryDial) || !isValidIranMobile(phone) || !/^\d{6}$/.test(code)) {
       debug.debugReason = "invalid_input";
       return fail(debug, 400);
     }

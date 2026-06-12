@@ -1,8 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
+import {
+  DEFAULT_DIAL_CODE,
+  LOGIN_COUNTRIES,
+  getCountryName,
+  isIranDialCode,
+} from "@/lib/countries";
+import { buildFlagcdnUrl } from "@/lib/teams";
 import type { Locale } from "@/i18n/routing";
 
 type Step = "phone" | "otp";
@@ -15,6 +23,7 @@ export function LoginForm() {
   const locale = (params.locale as Locale) ?? "fa";
 
   const [step, setStep] = useState<Step>("phone");
+  const [countryDial, setCountryDial] = useState(DEFAULT_DIAL_CODE);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
@@ -23,21 +32,33 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const iranSelected = isIranDialCode(countryDial);
+
   async function handleRequestOtp(event: FormEvent) {
     event.preventDefault();
     setError("");
+
+    if (!iranSelected) {
+      setError(t("iranOtpOnly"));
+      return;
+    }
+
     setLoading(true);
 
     try {
       const response = await fetch("/api/auth/request-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone, countryDial }),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error ?? te("network"));
+        if (data.errorCode === "IRAN_OTP_ONLY") {
+          setError(t("iranOtpOnly"));
+        } else {
+          setError(data.error ?? te("network"));
+        }
         return;
       }
 
@@ -59,7 +80,12 @@ export function LoginForm() {
       const response = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, code, name: needsName ? name : undefined }),
+        body: JSON.stringify({
+          phone,
+          countryDial,
+          code,
+          name: needsName ? name : undefined,
+        }),
       });
 
       const data = await response.json();
@@ -91,17 +117,57 @@ export function LoginForm() {
         {step === "phone" ? (
           <form onSubmit={handleRequestOtp} className="mt-6 space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm text-white/80">{t("phone")}</span>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder={t("phonePlaceholder")}
-                required
-                dir="ltr"
-                className="w-full rounded-xl border border-white/20 bg-black/30 px-4 py-3 text-start text-white outline-none focus:border-emerald-400"
-              />
+              <span className="mb-2 block text-sm text-white/80">{t("country")}</span>
+              <div className="flex items-center gap-2" dir="ltr">
+                <Image
+                  src={buildFlagcdnUrl(
+                    LOGIN_COUNTRIES.find((c) => c.dialCode === countryDial)?.flagCode ?? "ir",
+                    40
+                  )}
+                  alt=""
+                  width={28}
+                  height={21}
+                  className="shrink-0 rounded-sm ring-1 ring-white/20"
+                />
+                <select
+                  value={countryDial}
+                  onChange={(e) => {
+                    setCountryDial(e.target.value);
+                    setError("");
+                  }}
+                  className="min-w-0 flex-1 appearance-none rounded-xl border border-white/20 bg-black/30 px-4 py-3 text-white outline-none focus:border-emerald-400"
+                >
+                  {LOGIN_COUNTRIES.map((country) => (
+                    <option key={`${country.iso}-${country.dialCode}`} value={country.dialCode}>
+                      +{country.dialCode} {getCountryName(country, locale)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm text-white/80">{t("phone")}</span>
+              <div className="flex gap-2" dir="ltr">
+                <span className="flex shrink-0 items-center rounded-xl border border-white/20 bg-black/40 px-3 text-sm text-white/70">
+                  +{countryDial}
+                </span>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={iranSelected ? t("phonePlaceholder") : t("phonePlaceholderIntl")}
+                  required
+                  className="min-w-0 flex-1 rounded-xl border border-white/20 bg-black/30 px-4 py-3 text-white outline-none focus:border-emerald-400"
+                />
+              </div>
+            </label>
+
+            {!iranSelected && (
+              <p className="rounded-xl bg-amber-500/15 px-4 py-3 text-sm text-amber-100">
+                {t("iranOtpOnly")}
+              </p>
+            )}
 
             {error && (
               <p className="rounded-xl bg-red-500/20 px-4 py-3 text-sm text-red-200">{error}</p>
@@ -109,7 +175,7 @@ export function LoginForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !iranSelected}
               className="w-full rounded-xl bg-emerald-500 py-3 font-bold text-white transition hover:bg-emerald-400 disabled:opacity-60"
             >
               {loading ? t("sendingOtp") : t("sendOtp")}

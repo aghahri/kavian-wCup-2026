@@ -5,9 +5,12 @@ import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { ScoreInput } from "@/components/ScoreInput";
 import { ShareButtons } from "@/components/ShareButtons";
+import { TeamFlag } from "@/components/TeamFlag";
 
 type PredictionFormProps = {
   matchId: string;
+  homeTeam: string;
+  awayTeam: string;
   homeTeamFa: string;
   awayTeamFa: string;
   stage: string;
@@ -26,6 +29,8 @@ type PredictionFormProps = {
 
 export function PredictionForm({
   matchId,
+  homeTeam,
+  awayTeam,
   homeTeamFa,
   awayTeamFa,
   stage,
@@ -81,9 +86,17 @@ export function PredictionForm({
         <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-200">
           {stage}
         </span>
-        <h2 className="mt-4 text-xl font-bold text-white">
-          {homeTeamFa} <span className="text-white/40">{t("versus")}</span> {awayTeamFa}
-        </h2>
+        <div className="mt-4 flex items-center justify-center gap-4">
+          <div className="flex flex-col items-center gap-2">
+            <TeamFlag teamName={homeTeam} size={40} />
+            <span className="text-sm font-bold text-white">{homeTeamFa}</span>
+          </div>
+          <span className="text-lg font-bold text-white/40">{t("versus")}</span>
+          <div className="flex flex-col items-center gap-2">
+            <TeamFlag teamName={awayTeam} size={40} />
+            <span className="text-sm font-bold text-white">{awayTeamFa}</span>
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-center gap-6">
