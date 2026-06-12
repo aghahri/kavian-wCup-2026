@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/contexts/CurrentUserProvider";
 import type { Locale } from "@/i18n/routing";
 
@@ -10,7 +9,6 @@ type LogoutButtonProps = {
 };
 
 export function LogoutButton({ locale, label }: LogoutButtonProps) {
-  const router = useRouter();
   const { clearUser } = useCurrentUser();
 
   async function handleLogout() {
@@ -20,8 +18,7 @@ export function LogoutButton({ locale, label }: LogoutButtonProps) {
       cache: "no-store",
       credentials: "same-origin",
     });
-    router.push(`/${locale}`);
-    router.refresh();
+    window.location.href = `/${locale}`;
   }
 
   return (

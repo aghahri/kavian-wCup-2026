@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import {
@@ -10,7 +10,6 @@ import {
   getCountryName,
   isIranDialCode,
 } from "@/lib/countries";
-import { useCurrentUser } from "@/contexts/CurrentUserProvider";
 import { formatPhoneForApi } from "@/lib/phone";
 import { buildFlagcdnUrl } from "@/lib/teams";
 import type { Locale } from "@/i18n/routing";
@@ -20,10 +19,8 @@ type Step = "phone" | "otp" | "name-required";
 export function LoginForm() {
   const t = useTranslations("login");
   const te = useTranslations("errors");
-  const router = useRouter();
   const params = useParams();
   const locale = (params.locale as Locale) ?? "fa";
-  const { refreshUser } = useCurrentUser();
 
   const [step, setStep] = useState<Step>("phone");
   const [countryDial, setCountryDial] = useState(DEFAULT_DIAL_CODE);
@@ -114,15 +111,12 @@ export function LoginForm() {
         return;
       }
 
-      await refreshUser();
-      router.refresh();
-
       if (data.user?.isAdmin) {
-        router.push(`/${locale}/admin`);
+        window.location.href = `/${locale}/admin`;
       } else if (data.isNewUser) {
-        router.push(`/${locale}/profile`);
+        window.location.href = `/${locale}/profile`;
       } else {
-        router.push(`/${locale}/predict`);
+        window.location.href = `/${locale}/predict`;
       }
     } catch {
       setError(te("network"));
