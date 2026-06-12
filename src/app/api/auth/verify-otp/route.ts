@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { isIranDialCode } from "@/lib/countries";
 import { NO_STORE_HEADERS } from "@/lib/api-headers";
-import { isValidIranMobile, maskPhone, normalizePhoneInput } from "@/lib/phone";
+import {
+  isValidE164Phone,
+  legacyPhoneVariants,
+  maskPhone,
+  normalizePhoneInput,
+} from "@/lib/phone";
 import {
   isOtpDevBypass,
   OTP_DEV_CODE,
@@ -72,6 +76,26 @@ function fail(payload: VerifyDebug, status: number) {
   );
 }
 
+async function findExistingUser(phone: string) {
+  const direct = await prisma.user.findUnique({ where: { phone } });
+  if (direct) return direct;
+
+  for (const legacy of legacyPhoneVariants(phone)) {
+    const match = await prisma.user.findUnique({ where: { phone: legacy } });
+    if (match) {
+      if (match.phone !== phone) {
+        await prisma.user.update({
+          where: { id: match.id },
+          data: { phone },
+        });
+      }
+      return { ...match, phone };
+    }
+  }
+
+  return null;
+}
+
 export async function POST(request: Request) {
   const debug: VerifyDebug = {
     phone: "",
@@ -88,7 +112,7 @@ export async function POST(request: Request) {
 
     debug.phone = phone;
 
-    if (!isIranDialCode(countryDial) || !isValidIranMobile(phone) || !/^\d{6}$/.test(code)) {
+    if (!isValidE164Phone(phone) || !/^\d{6}$/.test(code)) {
       debug.debugReason = "invalid_input";
       return fail(debug, 400);
     }
@@ -145,7 +169,7 @@ export async function POST(request: Request) {
       return fail(debug, 400);
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { phone } });
+    const existingUser = await findExistingUser(phone);
 
     if (!existingUser && (!name || name.length < 2)) {
       debug.debugReason = "needs_name";

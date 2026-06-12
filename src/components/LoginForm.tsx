@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import {
   DEFAULT_DIAL_CODE,
   LOGIN_COUNTRIES,
@@ -15,6 +15,8 @@ import { buildFlagcdnUrl } from "@/lib/teams";
 import type { Locale } from "@/i18n/routing";
 
 type Step = "phone" | "otp" | "name-required";
+
+const DEFAULT_COOLDOWN_SECONDS = 60;
 
 export function LoginForm() {
   const t = useTranslations("login");
@@ -32,24 +34,26 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const iranSelected = isIranDialCode(countryDial);
+  const cooldownActive = cooldownSeconds > 0;
 
-  function mapRequestOtpError(status: number, data: { errorCode?: string }) {
-    if (data.errorCode === "IRAN_OTP_ONLY") return t("iranOtpOnly");
-    if (status === 429) return t("rateLimitError");
-    return t("sendOtpFailed");
-  }
+  const startCooldown = useCallback((seconds: number) => {
+    setCooldownSeconds(Math.max(1, Math.ceil(seconds)));
+  }, []);
 
-  async function handleRequestOtp(event: FormEvent) {
-    event.preventDefault();
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const timer = window.setInterval(() => {
+      setCooldownSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldownSeconds]);
+
+  async function requestOtp() {
     setError("");
     setInfo("");
-
-    if (!iranSelected) {
-      setError(t("iranOtpOnly"));
-      return;
-    }
 
     const apiPhone = formatPhoneForApi(countryDial, phone);
     setLoading(true);
@@ -63,13 +67,21 @@ export function LoginForm() {
       });
 
       const data = await response.json();
+
+      if (response.status === 429) {
+        startCooldown(data.retryAfterSeconds ?? DEFAULT_COOLDOWN_SECONDS);
+        setError(t("resendCooldown", { seconds: data.retryAfterSeconds ?? DEFAULT_COOLDOWN_SECONDS }));
+        return;
+      }
+
       if (!response.ok) {
-        setError(mapRequestOtpError(response.status, data));
+        setError(t("sendOtpFailed"));
         return;
       }
 
       setSubmittedPhone(apiPhone);
-      setPhoneMask(data.phoneMask ?? "");
+      setPhoneMask(data.phoneMask ?? apiPhone);
+      startCooldown(data.cooldownSeconds ?? DEFAULT_COOLDOWN_SECONDS);
       setStep("otp");
     } catch {
       setError(te("network"));
@@ -78,10 +90,23 @@ export function LoginForm() {
     }
   }
 
+  async function handleRequestOtp(event: FormEvent) {
+    event.preventDefault();
+    if (cooldownActive) return;
+    await requestOtp();
+  }
+
+  async function handleResendOtp() {
+    if (cooldownActive || loading) return;
+    await requestOtp();
+  }
+
   async function handleVerifyOtp(event: FormEvent) {
     event.preventDefault();
     setError("");
-    setInfo("");
+    if (step !== "name-required") {
+      setInfo("");
+    }
     setLoading(true);
 
     try {
@@ -103,6 +128,7 @@ export function LoginForm() {
       if (data.needsName) {
         setStep("name-required");
         setInfo(t("nameRequiredHint"));
+        setError("");
         return;
       }
 
@@ -130,7 +156,7 @@ export function LoginForm() {
       ? t("subtitlePhone")
       : step === "name-required"
         ? t("nameRequiredHint")
-        : t("subtitleOtp", { phone: phoneMask });
+        : t("otpSentTo", { phone: phoneMask });
 
   const submitLabel =
     step === "name-required"
@@ -193,22 +219,20 @@ export function LoginForm() {
               )}
             </label>
 
-            {!iranSelected && (
-              <p className="rounded-xl bg-amber-500/15 px-4 py-3 text-sm text-amber-100">
-                {t("iranOtpOnly")}
-              </p>
-            )}
-
             {error && (
               <p className="rounded-xl bg-red-500/20 px-4 py-3 text-sm text-red-200">{error}</p>
             )}
 
             <button
               type="submit"
-              disabled={loading || !iranSelected}
+              disabled={loading || cooldownActive}
               className="w-full rounded-xl bg-emerald-500 py-3 font-bold text-white transition hover:bg-emerald-400 disabled:opacity-60"
             >
-              {loading ? t("sendingOtp") : t("sendOtp")}
+              {loading
+                ? t("sendingOtp")
+                : cooldownActive
+                  ? t("resendCooldown", { seconds: cooldownSeconds })
+                  : t("sendOtp")}
             </button>
           </form>
         ) : (
@@ -262,6 +286,19 @@ export function LoginForm() {
             >
               {submitLabel}
             </button>
+
+            {step === "otp" && (
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={loading || cooldownActive}
+                className="w-full rounded-xl border border-white/20 py-3 text-sm font-medium text-white transition hover:bg-white/10 disabled:opacity-50"
+              >
+                {cooldownActive
+                  ? t("resendCooldown", { seconds: cooldownSeconds })
+                  : t("resendOtp")}
+              </button>
+            )}
 
             <button
               type="button"

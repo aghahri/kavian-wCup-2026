@@ -6,7 +6,9 @@ import { ProfileHero } from "@/components/ProfileHero";
 import { ReferralBanner } from "@/components/ReferralBanner";
 import { ShareButtons } from "@/components/ShareButtons";
 import { syncUserBadges } from "@/lib/badges";
+import { getCountryName } from "@/lib/countries";
 import { formatDate, formatNumber } from "@/lib/format";
+import { getCountryFromE164 } from "@/lib/phone";
 import { getUserRank } from "@/lib/leaderboard";
 import { getTournamentName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
@@ -50,6 +52,11 @@ export default async function ProfilePage({ params }: PageProps) {
   const totalPoints = user.predictions.reduce((s, p) => s + p.points, 0);
   const profileUrl = `${getSiteUrl()}/${locale}/profile`;
 
+  const phoneCountry = getCountryFromE164(user.phone);
+  const countryLabel = phoneCountry
+    ? `${t("country")}: ${getCountryName(phoneCountry, locale)}`
+    : undefined;
+
   const badgeLabels = {
     early_supporter: tb("earlySupporter"),
     top_predictor: tb("topPredictor"),
@@ -62,6 +69,7 @@ export default async function ProfilePage({ params }: PageProps) {
       <ProfileHero
         locale={locale}
         joinedLabel={t("joined", { date: formatDate(user.createdAt, locale) })}
+        countryLabel={countryLabel}
         predictLabel={t("predictNow")}
         badges={badges}
         badgeLabels={badgeLabels}

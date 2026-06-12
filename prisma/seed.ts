@@ -148,7 +148,7 @@ async function main() {
   await prisma.user.create({
     data: {
       name: "کاویان",
-      phone: "09120000000",
+      phone: "+989120000000",
       isAdmin: true,
       isVip: true,
       referralCode: referralCode(),
@@ -157,9 +157,9 @@ async function main() {
 
   await prisma.user.createMany({
     data: [
-      { name: "علی", phone: "09121111111", referralCode: referralCode() },
-      { name: "Sara", phone: "09122222222", referralCode: referralCode() },
-      { name: "رضا", phone: "09123333333", referralCode: referralCode() },
+      { name: "علی", phone: "+989121111111", referralCode: referralCode() },
+      { name: "Sara", phone: "+989122222222", referralCode: referralCode() },
+      { name: "رضا", phone: "+989123333333", referralCode: referralCode() },
     ],
   });
 

@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { NO_STORE_HEADERS } from "@/lib/api-headers";
-import { isIranDialCode } from "@/lib/countries";
 import {
-  maskPhone,
-  isValidIranMobile,
+  isValidE164Phone,
   isValidSmsRecipient,
+  maskPhone,
   normalizePhoneInput,
   normalizeSmsRecipient,
 } from "@/lib/phone";
@@ -21,24 +20,15 @@ import { prisma } from "@/lib/prisma";
 import { sendSamantelSms } from "@/lib/samantel-sms";
 
 const GENERIC_ERROR = "درخواست نامعتبر است. لطفاً بعداً تلاش کنید.";
-const IRAN_OTP_ONLY = "فعلاً ورود پیامکی فقط برای شماره‌های ایران فعال است.";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const countryDial = String(body.countryDial ?? "98").replace(/\D/g, "");
-
-    if (!isIranDialCode(countryDial)) {
-      return NextResponse.json(
-        { error: IRAN_OTP_ONLY, errorCode: "IRAN_OTP_ONLY" },
-        { status: 400, headers: NO_STORE_HEADERS }
-      );
-    }
-
     const phone = normalizePhoneInput(countryDial, String(body.phone ?? ""));
     const smsRecipient = normalizeSmsRecipient(phone);
 
-    if (!isValidIranMobile(phone) || !isValidSmsRecipient(smsRecipient)) {
+    if (!isValidE164Phone(phone) || !isValidSmsRecipient(smsRecipient)) {
       return NextResponse.json({ error: GENERIC_ERROR }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
@@ -52,8 +42,10 @@ export async function POST(request: Request) {
     });
 
     if (recent) {
+      const remainingMs = OTP_REQUEST_COOLDOWN_MS - (Date.now() - recent.createdAt.getTime());
+      const retryAfterSeconds = Math.max(1, Math.ceil(remainingMs / 1000));
       return NextResponse.json(
-        { error: GENERIC_ERROR, errorCode: "RATE_LIMIT" },
+        { error: GENERIC_ERROR, errorCode: "RATE_LIMIT", retryAfterSeconds },
         { status: 429, headers: NO_STORE_HEADERS }
       );
     }
@@ -125,6 +117,7 @@ export async function POST(request: Request) {
         ok: true,
         phoneMask: maskPhone(phone),
         expiresInSeconds: OTP_EXPIRY_MS / 1000,
+        cooldownSeconds: OTP_REQUEST_COOLDOWN_MS / 1000,
         smsDispatched:
           providerStatus.includes("called:yes") && !providerStatus.includes("send_failed"),
       },

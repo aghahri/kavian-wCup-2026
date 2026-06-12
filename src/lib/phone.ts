@@ -1,105 +1,84 @@
-import { isIranDialCode } from "@/lib/countries";
-
-/** Domestic Iranian mobile: 09XXXXXXXXX */
-export function normalizeIranPhone(phone: string): string {
-  let digits = phone.replace(/\D/g, "");
-
-  if (digits.startsWith("98") && digits.length >= 12) {
-    digits = digits.slice(2);
-  }
-  if (digits.startsWith("0")) {
-    digits = digits.slice(1);
-  }
-  if (digits.startsWith("9") && digits.length === 10) {
-    return `0${digits}`;
-  }
-  if (digits.startsWith("09") && digits.length === 11) {
-    return digits.startsWith("0") ? digits : `0${digits}`;
-  }
-  if (/^9\d{9}$/.test(digits)) {
-    return `0${digits}`;
-  }
-
-  return digits;
-}
-
-/** E.164-style storage for non-Iran numbers: +{dial}{national} */
-export function normalizeInternationalPhone(dialCode: string, phone: string): string {
-  let digits = phone.replace(/\D/g, "");
-  if (digits.startsWith(dialCode)) {
-    digits = digits.slice(dialCode.length);
-  }
-  digits = digits.replace(/^0+/, "");
-  return `+${dialCode}${digits}`;
-}
-
-/** Iran E.164 for API submit: +989XXXXXXXXX */
-export function toIranE164(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (/^98\d{10}$/.test(digits)) {
-    return `+${digits}`;
-  }
-  const domestic = normalizeIranPhone(phone);
-  if (/^09\d{9}$/.test(domestic)) {
-    return `+98${domestic.slice(1)}`;
-  }
-  return phone.trim().startsWith("+") ? phone.trim() : `+${digits}`;
-}
+import { LOGIN_COUNTRIES, type LoginCountry } from "@/lib/countries";
 
 /**
- * Normalize phone from login/API input.
- * Iran (98) -> 09XXXXXXXXX (DB storage)
- * Others -> +{dialCode}{nationalNumber}
+ * Normalize login/API input to E.164: +{dialCode}{nationalNumber}
+ *
+ * Examples:
+ * Iran (98): 9188807015, 09188807015, 989188807015, +989188807015 → +989188807015
+ * Germany (49): 15123456789, +4915123456789 → +4915123456789
  */
 export function normalizePhoneInput(dialCode: string, phone: string): string {
-  if (isIranDialCode(dialCode)) {
-    return normalizeIranPhone(phone);
+  const dial = dialCode.replace(/\D/g, "");
+  let digits = phone.trim().replace(/\D/g, "");
+  if (!digits || !dial) return "";
+
+  if (digits.startsWith(dial)) {
+    const rest = digits.slice(dial.length);
+    if (rest.length >= 6) {
+      digits = rest;
+    }
   }
-  return normalizeInternationalPhone(dialCode, phone);
+
+  digits = digits.replace(/^0+/, "");
+  return `+${dial}${digits}`;
 }
 
-/** Format login submit payload phone field */
-export function formatPhoneForApi(dialCode: string, phone: string): string {
-  if (isIranDialCode(dialCode)) {
-    return toIranE164(phone);
-  }
-  return normalizeInternationalPhone(dialCode, phone);
-}
-
-/** @deprecated use normalizeIranPhone — kept for existing call sites expecting Iran-only */
+/** @deprecated use normalizePhoneInput */
 export function normalizePhone(phone: string): string {
-  return normalizeIranPhone(phone);
+  return normalizePhoneInput("98", phone);
 }
 
-/** Samantel recipient format: 989XXXXXXXXX (12 digits, no plus) */
-export function normalizeSmsRecipient(phone: string): string {
-  const domestic = normalizeIranPhone(phone);
-  if (/^09\d{9}$/.test(domestic)) {
-    return `98${domestic.slice(1)}`;
+/** @deprecated use normalizePhoneInput */
+export function normalizeIranPhone(phone: string): string {
+  const e164 = normalizePhoneInput("98", phone);
+  if (e164.startsWith("+98")) {
+    return `0${e164.slice(3)}`;
   }
-
-  const digits = phone.replace(/\D/g, "");
-  if (/^98\d{10}$/.test(digits)) {
-    return digits;
-  }
-
-  return "";
+  return phone;
 }
 
-export function isValidIranMobile(phone: string): boolean {
-  return /^09\d{9}$/.test(normalizeIranPhone(phone));
+/** Client submit + API storage format (E.164). */
+export function formatPhoneForApi(dialCode: string, phone: string): string {
+  return normalizePhoneInput(dialCode, phone);
+}
+
+/** Samantel/international SMS recipient: digits only, no plus. */
+export function normalizeSmsRecipient(e164Phone: string): string {
+  return e164Phone.replace(/\D/g, "");
+}
+
+export function isValidE164Phone(phone: string): boolean {
+  return /^\+\d{8,15}$/.test(phone);
 }
 
 export function isValidSmsRecipient(recipient: string): boolean {
-  return /^98\d{10}$/.test(recipient.replace(/\D/g, ""));
+  const digits = recipient.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15;
+}
+
+/** @deprecated use isValidE164Phone */
+export function isValidIranMobile(phone: string): boolean {
+  const e164 = phone.startsWith("+") ? phone : normalizePhoneInput("98", phone);
+  return /^\+989\d{9}$/.test(e164);
 }
 
 export function isValidPhoneInput(dialCode: string, phone: string): boolean {
-  if (isIranDialCode(dialCode)) {
-    return isValidIranMobile(phone);
+  return isValidE164Phone(normalizePhoneInput(dialCode, phone));
+}
+
+/** Alternate DB keys for legacy Iranian domestic storage (09XXXXXXXXX). */
+export function legacyPhoneVariants(e164: string): string[] {
+  const variants = new Set<string>();
+  if (e164.startsWith("+98")) {
+    const national = e164.slice(3);
+    if (/^9\d{9}$/.test(national)) {
+      variants.add(`0${national}`);
+    }
   }
-  const normalized = normalizeInternationalPhone(dialCode, phone);
-  return /^\+\d{8,15}$/.test(normalized);
+  if (/^09\d{9}$/.test(e164)) {
+    variants.add(`+98${e164.slice(1)}`);
+  }
+  return [...variants];
 }
 
 export function maskPhone(phone: string): string {
@@ -107,14 +86,25 @@ export function maskPhone(phone: string): string {
     if (phone.length < 8) return "***";
     return `${phone.slice(0, 4)}***${phone.slice(-3)}`;
   }
-  const normalized = normalizeIranPhone(phone);
-  if (normalized.length < 7) return "***";
-  return `${normalized.slice(0, 4)}***${normalized.slice(-3)}`;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 7) return "***";
+  return `${digits.slice(0, 4)}***${digits.slice(-3)}`;
 }
 
-/** Mask 989XXXXXXXXX as 98918***015 */
+/** Mask SMS recipient digits e.g. 98918***015 */
 export function maskSmsRecipient(recipient: string): string {
   const digits = recipient.replace(/\D/g, "");
   if (digits.length < 8) return "***";
   return `${digits.slice(0, 5)}***${digits.slice(-3)}`;
+}
+
+export function getCountryFromE164(phone: string): LoginCountry | undefined {
+  const digits = phone.replace(/\D/g, "");
+  const sorted = [...LOGIN_COUNTRIES].sort((a, b) => b.dialCode.length - a.dialCode.length);
+  for (const country of sorted) {
+    if (digits.startsWith(country.dialCode)) {
+      return country;
+    }
+  }
+  return undefined;
 }

@@ -10,6 +10,7 @@ import type { Locale } from "@/i18n/routing";
 type ProfileHeroProps = {
   locale: Locale;
   joinedLabel: string;
+  countryLabel?: string;
   predictLabel: string;
   badges: BadgeId[];
   badgeLabels: Record<BadgeId, string>;
@@ -25,6 +26,7 @@ type ProfileHeroProps = {
 export function ProfileHero({
   locale,
   joinedLabel,
+  countryLabel,
   predictLabel,
   badges,
   badgeLabels,
@@ -50,6 +52,9 @@ export function ProfileHero({
         <UserAvatar user={user} size={80} />
         <div>
           <h1 className="text-2xl font-black text-white">{user.name}</h1>
+          {countryLabel && (
+            <p className="mt-1 text-sm text-white/70">{countryLabel}</p>
+          )}
           <p className="mt-1 text-sm text-white/60">{joinedLabel}</p>
           <div className="mt-2">
             <BadgeList badges={badges} labels={badgeLabels} />

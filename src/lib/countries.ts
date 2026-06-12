@@ -14,6 +14,7 @@ export const LOGIN_COUNTRIES: LoginCountry[] = [
   { iso: "DE", dialCode: "49", flagCode: "de", nameFa: "آلمان", nameEn: "Germany", nameAr: "ألمانيا" },
   { iso: "FR", dialCode: "33", flagCode: "fr", nameFa: "فرانسه", nameEn: "France", nameAr: "فرنسا" },
   { iso: "TR", dialCode: "90", flagCode: "tr", nameFa: "ترکیه", nameEn: "Turkey", nameAr: "تركيا" },
+  { iso: "IQ", dialCode: "964", flagCode: "iq", nameFa: "عراق", nameEn: "Iraq", nameAr: "العراق" },
   { iso: "AE", dialCode: "971", flagCode: "ae", nameFa: "امارات", nameEn: "UAE", nameAr: "الإمارات" },
   { iso: "CA", dialCode: "1", flagCode: "ca", nameFa: "کانادا", nameEn: "Canada", nameAr: "كندا" },
   { iso: "AU", dialCode: "61", flagCode: "au", nameFa: "استرالیا", nameEn: "Australia", nameAr: "أستراليا" },
@@ -32,5 +33,5 @@ export function getCountryName(country: LoginCountry, locale: string): string {
 }
 
 export function isIranDialCode(dialCode: string): boolean {
-  return dialCode === "98";
+  return dialCode.replace(/\D/g, "") === "98";
 }
