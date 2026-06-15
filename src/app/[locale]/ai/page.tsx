@@ -12,6 +12,7 @@ import {
   RISK_LABELS,
   buildPredictionStats,
 } from "@/lib/ai/football-analysis";
+import { hasHighlights, highlightsWatchUrl } from "@/lib/highlights";
 import { getMatchStatus } from "@/lib/match-status";
 import { getAwayTeamName, getHomeTeamName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
@@ -26,6 +27,7 @@ export default async function AiPulsePage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("ai");
+  const tc = await getTranslations("matchCenter");
 
   const allMatches = await prisma.match.findMany({ orderBy: { kickoffAt: "desc" } });
 
@@ -113,6 +115,7 @@ export default async function AiPulsePage({ params }: PageProps) {
                 analysis={analysis}
                 locale={locale}
                 t={t}
+                tc={tc}
                 riskLabel={riskLabel(analysis.riskLevel)}
               />
             ))}
@@ -133,6 +136,7 @@ export default async function AiPulsePage({ params }: PageProps) {
                 analysis={analysis}
                 locale={locale}
                 t={t}
+                tc={tc}
                 riskLabel={riskLabel(analysis.riskLevel)}
                 finished
               />
@@ -172,18 +176,33 @@ function AiCard({
   analysis,
   locale,
   t,
+  tc,
   riskLabel,
   finished,
 }: {
-  match: Parameters<typeof getHomeTeamName>[0];
+  match: Parameters<typeof getHomeTeamName>[0] & {
+    homeScore: number | null;
+    awayScore: number | null;
+    scoreVerifiedAt?: Date | null;
+    scoreSourceName?: string | null;
+    scoreSourceUrl?: string | null;
+    highlightsUrl?: string | null;
+    highlightsEmbedUrl?: string | null;
+    kickoffAt: Date;
+    isFinished: boolean;
+  };
   analysis: Awaited<ReturnType<typeof getOrCreateMatchAnalysis>>;
   locale: Locale;
   t: (key: string, values?: Record<string, string | number>) => string;
+  tc: (key: string) => string;
   riskLabel: string;
   finished?: boolean;
 }) {
   const reasoning = getLocalizedReasoning(analysis, locale);
   const surprise = analysis.riskLevel === "high" && finished;
+  const hl = hasHighlights(match.highlightsUrl, match.highlightsEmbedUrl);
+  const watchUrl = highlightsWatchUrl(match.highlightsUrl, match.highlightsEmbedUrl);
+  const verified = Boolean(match.scoreVerifiedAt);
 
   return (
     <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -195,6 +214,22 @@ function AiCard({
       <p className="mt-3 text-center font-bold text-white">
         {getHomeTeamName(match, locale)} vs {getAwayTeamName(match, locale)}
       </p>
+      {finished && match.homeScore !== null && match.awayScore !== null && (
+        <p className="mt-2 text-center text-2xl font-black text-emerald-300">
+          {match.homeScore} - {match.awayScore}
+        </p>
+      )}
+      <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs">
+        {verified && <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-sky-200">✓ {tc("verifiedResult")}</span>}
+        {hl && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-200">🎬</span>}
+      </div>
+      {verified && match.scoreSourceUrl && (
+        <p className="mt-2 text-center text-xs">
+          <a href={match.scoreSourceUrl} target="_blank" rel="noopener noreferrer" className="text-sky-300 hover:underline">
+            {match.scoreSourceName ?? tc("source")}
+          </a>
+        </p>
+      )}
       <p className="mt-4 text-center text-lg font-black text-emerald-300">
         {finished ? t("result") : t("prediction")}:{" "}
         {formatAiPredictionLine(
@@ -213,12 +248,24 @@ function AiCard({
           <li key={i}>• {line}</li>
         ))}
       </ul>
-      <Link
-        href={`/${locale}/matches/${match.id}`}
-        className="mt-4 block text-center text-sm text-emerald-300 hover:underline"
-      >
-        {t("viewDetail")} →
-      </Link>
+      <div className="mt-4 flex flex-wrap justify-center gap-2">
+        {finished && hl && watchUrl && (
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-100"
+          >
+            {tc("watchHighlights")}
+          </a>
+        )}
+        <Link
+          href={`/${locale}/matches/${match.id}`}
+          className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-emerald-300 hover:bg-white/10"
+        >
+          {tc("viewMatch")} →
+        </Link>
+      </div>
     </article>
   );
 }

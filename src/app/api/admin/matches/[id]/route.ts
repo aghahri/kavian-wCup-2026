@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { detectProvider, normalizeYouTubeUrlToEmbed } from "@/lib/highlights";
 import { refreshMatchAfterScoreUpdate } from "@/lib/matches/match-refresh";
 import { prisma } from "@/lib/prisma";
 
@@ -39,6 +40,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       highlightsProvider?: string | null;
       highlightsEmbedUrl?: string | null;
       markVerified?: boolean;
+      autoFinish?: boolean;
     } = {};
 
     if (body.homeTeam !== undefined) data.homeTeam = String(body.homeTeam).trim();
@@ -83,6 +85,32 @@ export async function PATCH(request: Request, context: RouteContext) {
       data.scoreVerifiedAt = null;
     }
 
+    const homeScore = body.homeScore !== undefined ? (body.homeScore === null ? null : Number(body.homeScore)) : existing.homeScore;
+    const awayScore = body.awayScore !== undefined ? (body.awayScore === null ? null : Number(body.awayScore)) : existing.awayScore;
+
+    if (
+      body.autoFinish === true &&
+      homeScore !== null &&
+      awayScore !== null &&
+      body.isFinished !== false
+    ) {
+      data.isFinished = true;
+      if (data.homeScore === undefined) data.homeScore = homeScore;
+      if (data.awayScore === undefined) data.awayScore = awayScore;
+    }
+
+    const hlUrl = body.highlightsUrl !== undefined ? body.highlightsUrl : existing.highlightsUrl;
+    const hlEmbed = body.highlightsEmbedUrl !== undefined ? body.highlightsEmbedUrl : existing.highlightsEmbedUrl;
+    const hlCandidate = hlEmbed || hlUrl;
+    if (hlCandidate && (body.highlightsUrl !== undefined || body.highlightsEmbedUrl !== undefined)) {
+      const provider = detectProvider(String(hlCandidate));
+      data.highlightsProvider = provider === "unknown" ? existing.highlightsProvider : provider;
+      const normalized = normalizeYouTubeUrlToEmbed(String(hlCandidate));
+      if (normalized && provider === "youtube") {
+        data.highlightsEmbedUrl = normalized;
+      }
+    }
+
     const match = await prisma.match.update({ where: { id }, data });
 
     const scoreChanged =
@@ -95,7 +123,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const refreshed = await prisma.match.findUnique({ where: { id } });
-    return NextResponse.json({ match: refreshed ?? match });
+    return NextResponse.json({
+      match: refreshed ?? match,
+      refreshed: scoreChanged,
+    });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "ورود لازم است" }, { status: 401 });

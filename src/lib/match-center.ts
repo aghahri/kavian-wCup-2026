@@ -8,7 +8,7 @@ import {
 import { getOrCreateMatchAnalysis } from "@/lib/match-analysis";
 import { buildMatchSummary } from "@/lib/match-summary";
 import { getCrowdForMatch } from "@/lib/crowd-predictions";
-import { resolveHighlightsEmbed } from "@/lib/match-highlights";
+import { resolveHighlightsEmbed } from "@/lib/highlights";
 import { getAwayTeamName, getHomeTeamName, getStageName } from "@/lib/match-i18n";
 import { getMatchStatus } from "@/lib/match-status";
 import { isPredictionOpen } from "@/lib/format";

@@ -35,6 +35,7 @@ export default async function AdminPage({ params }: PageProps) {
   const cards = [
     { href: `/${locale}/admin/ops`, title: t("opsTitle"), desc: t("opsSubtitle") },
     { href: `/${locale}/admin/matchday`, title: t("matchdayTitle"), desc: t("matchdaySubtitle") },
+    { href: `/${locale}/admin/results`, title: t("resultsTitle"), desc: t("resultsSubtitle") },
     { href: `/${locale}/admin/match-sources`, title: t("matchSourcesTitle"), desc: t("matchSourcesSubtitle") },
     { href: `/${locale}/admin/matches`, title: t("matches"), desc: t("matchesDesc") },
     { href: `/${locale}/admin/predictions`, title: t("predictions"), desc: t("predictionsDesc") },

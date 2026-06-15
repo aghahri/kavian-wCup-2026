@@ -4,6 +4,7 @@ import { MatchCountdown } from "@/components/MatchCountdown";
 import { MatchStatusBadge } from "@/components/MatchStatusBadge";
 import { TeamFlag } from "@/components/TeamFlag";
 import { formatDate, isPredictionOpen } from "@/lib/format";
+import { hasHighlights, highlightsWatchUrl } from "@/lib/highlights";
 import { getMatchStatus } from "@/lib/match-status";
 import type { Locale } from "@/i18n/routing";
 
@@ -23,6 +24,8 @@ type MatchCardProps = {
   showPredictLink?: boolean;
   featured?: boolean;
   scoreVerifiedAt?: Date | null;
+  scoreSourceName?: string | null;
+  scoreSourceUrl?: string | null;
   highlightsUrl?: string | null;
   highlightsEmbedUrl?: string | null;
   aiRefreshedAt?: Date | null;
@@ -44,6 +47,8 @@ export async function MatchCard({
   showPredictLink = false,
   featured = false,
   scoreVerifiedAt,
+  scoreSourceName,
+  scoreSourceUrl,
   highlightsUrl,
   highlightsEmbedUrl,
   aiRefreshedAt,
@@ -53,9 +58,12 @@ export async function MatchCard({
   const tp = await getTranslations({ locale, namespace: "predict" });
   const open = isPredictionOpen(kickoffAt, isFinished);
   const status = getMatchStatus(kickoffAt, isFinished);
+  const kickedOff = kickoffAt.getTime() < Date.now();
+  const missingScore = kickedOff && (homeScore === null || awayScore === null || !isFinished);
 
   const isVerified = Boolean(scoreVerifiedAt);
-  const hasHighlights = Boolean(highlightsUrl || highlightsEmbedUrl);
+  const hl = hasHighlights(highlightsUrl, highlightsEmbedUrl);
+  const watchUrl = highlightsWatchUrl(highlightsUrl, highlightsEmbedUrl);
   const aiUpdated = Boolean(aiRefreshedAt);
 
   const statusLabels = {
@@ -88,7 +96,7 @@ export async function MatchCard({
             {isFinished && isVerified && (
               <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-200">✓</span>
             )}
-            {isFinished && hasHighlights && (
+            {isFinished && hl && (
               <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-200">🎬</span>
             )}
             {isFinished && aiUpdated && (
@@ -128,6 +136,12 @@ export async function MatchCard({
         </div>
       )}
 
+      {kickedOff && missingScore && (
+        <p className="mt-2 rounded-lg bg-amber-500/15 px-3 py-2 text-center text-xs text-amber-200">
+          {tc("missingScoreWarning")}
+        </p>
+      )}
+
       {userPrediction && (
         <div className="mt-3 rounded-xl bg-black/20 px-3 py-2 text-center text-sm text-white/80">
           {tp("yourPrediction", {
@@ -142,7 +156,15 @@ export async function MatchCard({
         </div>
       )}
 
-      <div className="mt-4 flex items-center justify-between gap-2">
+      {isFinished && isVerified && scoreSourceUrl && (
+        <p className="mt-2 text-center text-xs text-white/50">
+          <a href={scoreSourceUrl} target="_blank" rel="noopener noreferrer" className="text-sky-300 hover:underline">
+            ✓ {tc("verifiedResult")} — {scoreSourceName ?? tc("source")}
+          </a>
+        </p>
+      )}
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
         <span
           className={`text-xs font-medium ${
             isFinished ? "text-white/50" : open ? "text-emerald-300" : "text-amber-300"
@@ -150,7 +172,17 @@ export async function MatchCard({
         >
           {isFinished ? t("finished") : open ? t("open") : t("closed")}
         </span>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {isFinished && hl && watchUrl && (
+            <a
+              href={watchUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-amber-500/20 px-3 py-2 text-xs font-bold text-amber-100 hover:bg-amber-500/30"
+            >
+              {tc("watchHighlights")}
+            </a>
+          )}
           <Link
             href={`/${locale}/matches/${id}`}
             className="rounded-lg border border-white/20 px-3 py-2 text-xs font-medium text-white/80 hover:bg-white/10"

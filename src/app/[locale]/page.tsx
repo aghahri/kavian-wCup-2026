@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdBannerSlot } from "@/components/AdBannerSlot";
 import { GrowthLoopBanner } from "@/components/GrowthLoopBanner";
+import { FinishedMatchRow } from "@/components/FinishedMatchRow";
 import { InstallPwaBanner } from "@/components/InstallPwaBanner";
 import { LeaderboardTable } from "@/components/LeaderboardTable";
 import { MatchCountdown } from "@/components/MatchCountdown";
@@ -23,6 +24,7 @@ export default async function HomePage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("home");
+  const tc = await getTranslations("matchCenter");
   const user = await getCurrentUser();
 
   const [hook, ads] = await Promise.all([
@@ -153,33 +155,26 @@ export default async function HomePage({ params }: PageProps) {
         <p className="mt-2 text-sm text-white/70 line-clamp-2">{hook.recap.funFact}</p>
       </Link>
 
-      {/* Finished matches & highlights */}
+      {/* Results & highlights */}
       {hook.recentFinished.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white">{t("finishedHighlights")}</h2>
+            <h2 className="text-sm font-bold text-white">{t("resultsHighlights")}</h2>
             <Link href={`/${locale}/fixtures`} className="text-xs text-emerald-300">{t("allFixtures")}</Link>
           </div>
           <div className="space-y-2">
             {hook.recentFinished.map((m) => (
-              <Link
+              <FinishedMatchRow
                 key={m.id}
-                href={`/${locale}/matches/${m.id}`}
-                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-emerald-500/30"
-              >
-                <div className="flex items-center gap-3">
-                  <TeamFlag teamName={m.homeTeam} size={28} />
-                  <span className="text-sm font-bold text-white">
-                    {getHomeTeamName(m, locale)} {m.homeScore ?? 0}-{m.awayScore ?? 0} {getAwayTeamName(m, locale)}
-                  </span>
-                  <TeamFlag teamName={m.awayTeam} size={28} />
-                </div>
-                <div className="flex gap-1 text-xs">
-                  {m.scoreVerifiedAt && <span className="text-sky-300">✓</span>}
-                  {(m.highlightsUrl || m.highlightsEmbedUrl) && <span>🎬</span>}
-                  {m.aiRefreshedAt && <span>🤖</span>}
-                </div>
-              </Link>
+                match={m}
+                locale={locale}
+                labels={{
+                  verified: tc("verifiedResult"),
+                  watchHighlights: tc("watchHighlights"),
+                  matchCenter: tc("viewMatch"),
+                  source: tc("source"),
+                }}
+              />
             ))}
           </div>
         </section>
