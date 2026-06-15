@@ -1,23 +1,23 @@
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdBannerSlot } from "@/components/AdBannerSlot";
+import { GrowthLoopBanner } from "@/components/GrowthLoopBanner";
 import { InstallPwaBanner } from "@/components/InstallPwaBanner";
 import { LeaderboardTable } from "@/components/LeaderboardTable";
-import { MatchCard } from "@/components/MatchCard";
 import { MatchCountdown } from "@/components/MatchCountdown";
 import { ReferralBanner } from "@/components/ReferralBanner";
 import { TeamFlag } from "@/components/TeamFlag";
+import { formatAiPredictionLine } from "@/lib/ai/football-analysis";
 import { getCurrentUser } from "@/lib/auth";
-import { buildLeaderboard } from "@/lib/leaderboard";
+import { crowdTeamLabels } from "@/lib/crowd-predictions";
 import { formatNumber } from "@/lib/format";
-import { getAwayTeamName, getHomeTeamName, getStageName, getTournamentName } from "@/lib/match-i18n";
+import { getHomeHookData } from "@/lib/hook-home";
+import { getAwayTeamName, getHomeTeamName, getStageName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
 import { ensureUserReferralCode, getReferralUrl } from "@/lib/referral";
 import type { Locale } from "@/i18n/routing";
 
-type PageProps = {
-  params: Promise<{ locale: Locale }>;
-};
+type PageProps = { params: Promise<{ locale: Locale }> };
 
 export default async function HomePage({ params }: PageProps) {
   const { locale } = await params;
@@ -25,42 +25,13 @@ export default async function HomePage({ params }: PageProps) {
   const t = await getTranslations("home");
   const user = await getCurrentUser();
 
-  const [
-    nextMatch,
-    upcomingMatches,
-    topPlayers,
-    totalPredictions,
-    activeTournaments,
-    ads,
-    recentWinners,
-  ] = await Promise.all([
-    prisma.match.findFirst({
-      where: { isFinished: false },
-      orderBy: { kickoffAt: "asc" },
-    }),
-    prisma.match.findMany({
-      where: { isFinished: false },
-      orderBy: { kickoffAt: "asc" },
-      take: 3,
-      skip: 1,
-    }),
-    buildLeaderboard({ period: "global", limit: 5 }),
-    prisma.prediction.count(),
-    prisma.tournament.findMany({
-      where: { isActive: true },
-      take: 3,
-      include: { prizes: { where: { isActive: true }, take: 1 } },
-    }),
+  const [hook, ads] = await Promise.all([
+    getHomeHookData(locale, user),
     prisma.adBanner.findMany({
-      where: {
-        isActive: true,
-        placement: "home_top",
-        OR: [{ locale: null }, { locale }],
-      },
+      where: { isActive: true, placement: "home_top", OR: [{ locale: null }, { locale }] },
       orderBy: { sortOrder: "asc" },
       take: 2,
     }),
-    buildLeaderboard({ period: "weekly", limit: 3 }),
   ]);
 
   let referralUrl: string | null = null;
@@ -77,227 +48,153 @@ export default async function HomePage({ params }: PageProps) {
     started: t("countdownStarted"),
   };
 
+  const nextMatch = hook.nextMatch;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <AdBannerSlot ads={ads} />
+      <GrowthLoopBanner banners={hook.banners} />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-600/35 via-[#0b1f3a] to-[#071526] p-6 shadow-2xl sm:p-10">
-        <div className="absolute -end-10 -top-10 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl" />
-        <p className="mb-2 text-sm font-medium text-emerald-200">{t("welcome")}</p>
-        <h1 className="text-3xl font-black leading-tight text-white sm:text-5xl">
-          {t("title")}
-          <span className="block text-emerald-300">{t("subtitle")}</span>
-        </h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">{t("description")}</p>
-
-        {nextMatch && (
-          <div className="mt-8 rounded-2xl border border-white/10 bg-black/25 p-5">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-emerald-300">
-              {t("nextMatch")}
-            </p>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center justify-center gap-4">
-                <TeamFlag teamName={nextMatch.homeTeam} size={48} />
-                <span className="text-lg font-bold text-white/50">{t("vs")}</span>
-                <TeamFlag teamName={nextMatch.awayTeam} size={48} />
-              </div>
-              <div className="text-center sm:text-end">
-                <p className="font-bold text-white">
-                  {getHomeTeamName(nextMatch, locale)} {t("vs")}{" "}
-                  {getAwayTeamName(nextMatch, locale)}
-                </p>
-                <p className="mt-1 text-xs text-white/50">{getStageName(nextMatch, locale)}</p>
-              </div>
+      {/* 1. Next match countdown */}
+      {nextMatch && (
+        <section className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-600/25 to-[#071526] p-5 sm:p-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{t("nextMatch")}</p>
+          <div className="mt-3 flex items-center justify-center gap-4">
+            <TeamFlag teamName={nextMatch.homeTeam} size={44} />
+            <div className="text-center">
+              <p className="font-bold text-white">
+                {getHomeTeamName(nextMatch, locale)} {t("vs")} {getAwayTeamName(nextMatch, locale)}
+              </p>
+              <p className="text-xs text-white/50">{getStageName(nextMatch, locale)}</p>
             </div>
-            <div className="mt-5 flex justify-center">
-              <MatchCountdown
-                targetIso={nextMatch.kickoffAt.toISOString()}
-                locale={locale}
-                labels={countdownLabels}
-              />
-            </div>
+            <TeamFlag teamName={nextMatch.awayTeam} size={44} />
           </div>
-        )}
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href={`/${locale}/predict`}
-            className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-400"
-          >
-            {t("startPredict")}
-          </Link>
-          <Link
-            href={`/${locale}/leagues/create`}
-            className="rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-amber-400"
-          >
-            {t("createFamilyLeague")}
-          </Link>
-          <Link
-            href={`/${locale}/leaderboard`}
-            className="rounded-xl border border-white/20 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
-          >
-            {t("viewLeaderboard")}
-          </Link>
-        </div>
-      </section>
-
-      <InstallPwaBanner
-        title={t("installTitle")}
-        description={t("installDesc")}
-        installLabel={t("installCta")}
-        dismissLabel={t("installDismiss")}
-      />
-
-      {referralUrl && (
-        <ReferralBanner
-          referralUrl={referralUrl}
-          title={t("referralTitle")}
-          description={t("referralDesc")}
-          copyLabel={t("copyLink")}
-          copiedLabel={t("copied")}
-        />
-      )}
-
-      {/* Stats strip */}
-      <section className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-          <p className="text-2xl font-black text-emerald-300">
-            {formatNumber(activeTournaments.length, locale)}
-          </p>
-          <p className="mt-1 text-sm text-white/70">{t("activeTournaments")}</p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-          <p className="text-2xl font-black text-emerald-300">
-            {formatNumber(totalPredictions, locale)}
-          </p>
-          <p className="mt-1 text-sm text-white/70">{t("statPredictions")}</p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-          <p className="text-2xl font-black text-emerald-300">{user ? "✓" : "?"}</p>
-          <p className="mt-1 text-sm text-white/70">
-            {user ? t("statLoggedIn", { name: user.name }) : t("statNotLoggedIn")}
-          </p>
-        </div>
-      </section>
-
-      {/* Upcoming matches */}
-      {upcomingMatches.length > 0 && (
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">{t("upcoming")}</h2>
-            <Link href={`/${locale}/fixtures`} className="text-sm text-emerald-300 hover:underline">
-              {t("allFixtures")}
-            </Link>
+          <div className="mt-4 flex justify-center">
+            <MatchCountdown targetIso={nextMatch.kickoffAt.toISOString()} locale={locale} labels={countdownLabels} compact />
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {upcomingMatches.map((match) => (
-              <MatchCard
-                key={match.id}
-                id={match.id}
-                homeTeam={match.homeTeam}
-                awayTeam={match.awayTeam}
-                homeTeamFa={getHomeTeamName(match, locale)}
-                awayTeamFa={getAwayTeamName(match, locale)}
-                stage={getStageName(match, locale)}
-                kickoffAt={match.kickoffAt}
-                homeScore={match.homeScore}
-                awayScore={match.awayScore}
-                isFinished={match.isFinished}
-                locale={locale}
-                showPredictLink
-              />
-            ))}
-          </div>
+          <Link href={`/${locale}/predict?match=${nextMatch.id}`} className="mt-4 block text-center text-sm font-bold text-emerald-300 hover:underline">
+            {t("startPredict")} →
+          </Link>
         </section>
       )}
 
-      {/* Top predictors */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">{t("topPlayers")}</h2>
-          <Link href={`/${locale}/leaderboard`} className="text-sm text-emerald-300 hover:underline">
-            {t("fullLeaderboard")}
-          </Link>
-        </div>
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-          <LeaderboardTable
-            rows={topPlayers}
-            locale={locale}
-            labels={{
-              rank: t("rank"),
-              name: t("name"),
-              totalPoints: t("pointsLabel"),
-              exactScores: t("exactLabel"),
-              correctResults: t("correctLabel"),
-              predictionCount: t("predictionsLabel"),
-              empty: t("noScores"),
-            }}
-            badgeLabels={{
-              early_supporter: "",
-              top_predictor: "",
-              referral_champion: "",
-              world_cup_expert: "",
-              perfect_score: "",
-              three_exact_scores: "",
-              league_founder: "",
-              school_captain: "",
-              daily_streak: "",
-            }}
-            showProfileLink={false}
-          />
-        </div>
-      </section>
+      {/* 2. Second Chance */}
+      <Link href={`/${locale}/second-chance`} className="block rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5 transition hover:bg-amber-400/15">
+        <p className="text-lg font-black text-amber-100">{t("secondChanceTitle")}</p>
+        <p className="mt-1 text-sm text-white/70">{t("secondChanceDesc")}</p>
+        <p className="mt-3 text-xs text-amber-200/80">
+          {formatNumber(hook.secondChance.daysLeft, locale)} {t("daysLeft")} · {formatNumber(hook.secondChance.remainingMatches, locale)} {t("matchesLeft")}
+        </p>
+      </Link>
 
-      {/* Active tournaments */}
-      {activeTournaments.length > 0 && (
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">{t("activeTournaments")}</h2>
-            <Link href={`/${locale}/tournaments`} className="text-sm text-emerald-300 hover:underline">
-              {t("allTournaments")}
+      {/* 3. Football IQ + streak */}
+      {user && hook.footballIq && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link href={`/${locale}/football-iq`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs text-white/50">🧠 {t("footballIq")}</p>
+            <p className="text-3xl font-black text-emerald-300">{hook.footballIq.footballIq}</p>
+            <p className="text-xs text-white/60">#{formatNumber(hook.footballIq.globalRank, locale)} {t("global")}</p>
+          </Link>
+          {hook.streak && (
+            <Link href={`/${locale}/missions`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs text-white/50">{t("streak")}</p>
+              <p className="text-3xl">{hook.streak.flames || "—"}</p>
+              <p className="text-xs text-white/60">{formatNumber(hook.streak.current, locale)} {t("daysStreak")}</p>
             </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {activeTournaments.map((tr) => (
-              <Link
-                key={tr.id}
-                href={`/${locale}/tournaments`}
-                className="rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-emerald-500/30"
-              >
-                <h3 className="font-bold text-white">{getTournamentName(tr, locale)}</h3>
-                {tr.prizes[0] && (
-                  <p className="mt-2 text-sm text-amber-200">🏆 {tr.prizes[0].titleFa}</p>
-                )}
-                <span className="mt-3 inline-block text-xs text-emerald-300">{t("joinLeague")}</span>
+          )}
+        </div>
+      )}
+
+      {/* 4. Crowd preview */}
+      {hook.crowdPreview && (
+        <Link href={`/${locale}/crowd`} className="block rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-xs font-semibold text-sky-300">{t("crowdPick")}</p>
+          <p className="mt-2 font-bold text-white">
+            {crowdTeamLabels(hook.crowdPreview.match, locale).home} vs {crowdTeamLabels(hook.crowdPreview.match, locale).away}
+          </p>
+          <p className="mt-2 text-sm text-white/60">
+            {hook.crowdPreview.homePct}% · {hook.crowdPreview.drawPct}% · {hook.crowdPreview.awayPct}%
+          </p>
+        </Link>
+      )}
+
+      {/* 5. AI pick */}
+      {hook.engagement?.pickOfDay && (
+        <Link href={`/${locale}/matches/${hook.engagement.pickOfDay.match.id}/ai`} className="block rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+          <p className="text-xs font-semibold text-emerald-300">⭐ {t("aiPick")}</p>
+          <p className="mt-1 font-bold text-white">
+            {formatAiPredictionLine(
+              hook.engagement.pickOfDay.match,
+              locale,
+              hook.engagement.pickOfDay.suggestedHomeScore,
+              hook.engagement.pickOfDay.suggestedAwayScore
+            )}
+          </p>
+        </Link>
+      )}
+
+      {/* 6. My leagues */}
+      {hook.myLeagues.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-sm font-bold text-white/80">{t("myLeagues")}</h2>
+          <div className="flex gap-2 overflow-x-auto">
+            {hook.myLeagues.map((l) => (
+              <Link key={l.code} href={`/${locale}/leagues/${l.code}`} className="shrink-0 rounded-xl bg-white/10 px-4 py-2 text-sm text-white">
+                {l.title}
               </Link>
             ))}
           </div>
         </section>
       )}
 
-      {/* Weekly winners */}
-      {recentWinners.length > 0 && (
-        <section>
-          <h2 className="mb-4 text-xl font-bold text-white">{t("latestWinners")}</h2>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {recentWinners.map((winner, i) => (
-              <div
-                key={winner.id}
-                className="flex items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4"
-              >
-                <span className="text-2xl">{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</span>
-                <div>
-                  <p className="font-bold text-white">{winner.name}</p>
-                  <p className="text-sm text-emerald-300">
-                    {t("points", { count: formatNumber(winner.totalPoints, locale) })}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+      {/* 7. Daily recap */}
+      <Link href={`/${locale}/recap`} className="block rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="text-xs font-semibold text-amber-200">{t("dailyRecap")}</p>
+        <p className="mt-2 text-sm text-white/70 line-clamp-2">{hook.recap.funFact}</p>
+      </Link>
+
+      {/* 8. Missions */}
+      {hook.missions && (
+        <Link href={`/${locale}/missions`} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+          <span className="text-sm font-semibold text-white">{t("missions")}</span>
+          <span className="text-emerald-300">
+            {hook.missions.filter((m) => m.completed).length}/{hook.missions.length}
+          </span>
+        </Link>
       )}
+
+      {/* 9. Leaderboard */}
+      <section>
+        <div className="mb-3 flex justify-between">
+          <h2 className="text-sm font-bold text-white">{t("topPlayers")}</h2>
+          <Link href={`/${locale}/leaderboard`} className="text-xs text-emerald-300">{t("fullLeaderboard")}</Link>
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <LeaderboardTable
+            rows={hook.topPlayers}
+            locale={locale}
+            labels={{ rank: t("rank"), name: t("name"), totalPoints: t("pointsLabel"), exactScores: t("exactLabel"), correctResults: t("correctLabel"), predictionCount: t("predictionsLabel"), empty: t("noScores") }}
+            badgeLabels={{ early_supporter: "", top_predictor: "", referral_champion: "", world_cup_expert: "", perfect_score: "", three_exact_scores: "", league_founder: "", school_captain: "", daily_streak: "" }}
+            showProfileLink={false}
+          />
+        </div>
+      </section>
+
+      {/* 10–12. Fan map, referrals, PWA */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link href={`/${locale}/fans/map`} className="rounded-xl border border-white/10 bg-white/5 p-4 text-center text-sm text-emerald-300">
+          {t("fanMap")} →
+        </Link>
+        <Link href={referralUrl ? `/${locale}/referrals` : `/${locale}/login`} className="rounded-xl border border-white/10 bg-white/5 p-4 text-center text-sm text-emerald-300">
+          {t("referrals")} →
+        </Link>
+      </div>
+
+      {referralUrl && (
+        <ReferralBanner referralUrl={referralUrl} title={t("referralTitle")} description={t("referralDesc")} copyLabel={t("copyLink")} copiedLabel={t("copied")} />
+      )}
+
+      <InstallPwaBanner title={t("installTitle")} description={t("installDesc")} installLabel={t("installCta")} dismissLabel={t("installDismiss")} />
     </div>
   );
 }

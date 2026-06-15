@@ -13,7 +13,11 @@
     "fanMap": "Fan Map",
     "schools": "Schools",
     "referrals": "Referrals",
-    "daily": "Daily Challenge",
+    "daily": "Daily",
+    "secondChance": "Second Chance",
+    "crowd": "Crowd",
+    "recap": "Recap",
+    "missions": "Missions",
     "tournaments": "Tournaments",
     "profile": "Profile",
     "admin": "Admin",
@@ -63,7 +67,22 @@
     "pointsLabel": "Points",
     "exactLabel": "Exact",
     "correctLabel": "Correct",
-    "predictionsLabel": "Picks"
+    "predictionsLabel": "Picks",
+    "secondChanceTitle": "It's not too late",
+    "secondChanceDesc": "Join from now — Second Chance World Cup",
+    "daysLeft": "days left",
+    "matchesLeft": "matches left",
+    "footballIq": "Football IQ",
+    "global": "global",
+    "streak": "Activity streak",
+    "daysStreak": "day streak",
+    "crowdPick": "Crowd pick",
+    "aiPick": "AI pick today",
+    "myLeagues": "My leagues",
+    "dailyRecap": "Today's recap",
+    "missions": "Today's missions",
+    "fanMap": "Fan map",
+    "referrals": "Invite friends"
   },
   "fixtures": {
     "title": "Fixtures",
@@ -148,7 +167,8 @@
     "saveError": "Could not save. Try again.",
     "predictNow": "Make a prediction",
     "shareProfileText": "Follow my World Cup 2026 predictions on Kavian Football — {name}",
-    "referralStats": "Invite stats & score"
+    "referralStats": "Invite stats & score",
+    "streak": "Streak"
   },
   "badges": {
     "earlySupporter": "Early Supporter",
@@ -329,7 +349,8 @@
     "type_company": "Company",
     "type_public": "Public",
     "privacy_private": "Private",
-    "privacy_public": "Public"
+    "privacy_public": "Public",
+    "trashTalk": "League banter"
   },
   "ai": {
     "title": "Football AI Pulse",
@@ -430,6 +451,73 @@
     "inviteScore": "Invite score",
     "leaderboard": "Inviter leaderboard",
     "backProfile": "Profile"
+  },
+  "secondChance": {
+    "title": "Second Chance World Cup",
+    "subtitle": "Start today — past matches don't count",
+    "badge": "Second Chance",
+    "heroTitle": "It's not too late.",
+    "heroSubtitle": "Join the race from right now.",
+    "daysLeft": "days left",
+    "matchesLeft": "matches left",
+    "pointsLeft": "points available",
+    "cta": "Start from today",
+    "todayChampion": "Today's champion",
+    "weekChampion": "This week's champion",
+    "knockoutChampion": "Knockout champion",
+    "finalChampion": "Final stage champion",
+    "emptyBoard": "No scores yet",
+    "pts": "pts"
+  },
+  "footballIq": {
+    "title": "Football IQ",
+    "subtitle": "Your prediction knowledge score",
+    "yourIq": "Your Football IQ",
+    "globalRank": "Global rank",
+    "nationalRank": "National rank",
+    "categories": "Categories",
+    "improve": "Predict more to grow your IQ",
+    "category_beginner": "Beginner",
+    "category_casual": "Casual fan",
+    "category_analyst": "Analyst",
+    "category_expert": "Expert",
+    "category_elite": "Elite",
+    "category_master": "World Cup Master"
+  },
+  "crowd": {
+    "title": "Crowd predictions",
+    "subtitle": "What most users think",
+    "upcoming": "Upcoming matches",
+    "empty": "Not enough predictions yet",
+    "draw": "Draw",
+    "basedOn": "Based on {count} predictions",
+    "surprises": "Most surprising matches",
+    "crowdWrong": "The crowd got it wrong.",
+    "crowdRight": "{pct}% of users predicted correctly."
+  },
+  "recap": {
+    "title": "Daily recap",
+    "subtitle": "Today's biggest moments",
+    "badge": "Today",
+    "surprises": "3 biggest surprises",
+    "noSurprises": "No finished matches today",
+    "topPredictor": "Top predictor",
+    "hardestMatch": "Hardest match",
+    "bestLeague": "Best league",
+    "funFact": "Fun fact",
+    "shareText": "Check out today's Kavian Football recap!",
+    "predictNow": "Predict now"
+  },
+  "missions": {
+    "title": "World Cup missions",
+    "subtitle": "Complete daily missions for XP",
+    "xp": "Experience points",
+    "go": "Go",
+    "mission_predict_3": "Predict 3 matches",
+    "mission_invite_friend": "Invite 1 friend",
+    "mission_visit_ai": "Visit AI Football",
+    "mission_join_league": "Join a league",
+    "mission_share_result": "Share a result"
   },
   "errors": {
     "network": "Could not reach the server",

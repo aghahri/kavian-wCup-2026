@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { RecordActivity } from "@/components/RecordActivity";
 import { TeamFlag } from "@/components/TeamFlag";
 import { buildEngagementPicks } from "@/lib/ai/engagement-picks";
 import { getOrCreateMatchAnalysis } from "@/lib/match-analysis";
@@ -62,6 +63,7 @@ export default async function AiPulsePage({ params }: PageProps) {
 
   return (
     <div className="space-y-10">
+      <RecordActivity type="ai_visit" />
       <PageHeader title={t("title")} subtitle={t("subtitle")} badge={t("badge")} />
 
       {engagement && (

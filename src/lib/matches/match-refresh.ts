@@ -1,4 +1,6 @@
 import { regenerateMatchAnalysis } from "@/lib/match-analysis";
+import { applyFootballIqForMatch } from "@/lib/football-iq";
+import { refreshTrashTalkForMatch } from "@/lib/league-trash-talk";
 import { syncUserBadges } from "@/lib/badges";
 import { scoreDailyChallengeForMatch } from "@/lib/daily-challenge";
 import { prisma } from "@/lib/prisma";
@@ -42,6 +44,10 @@ export async function refreshMatchAfterScoreUpdate(matchId: string): Promise<voi
   }
 
   await regenerateMatchAnalysis(match);
+  const analysis = await prisma.matchAnalysis.findUnique({ where: { matchId } });
+  const risk = (analysis?.riskLevel ?? "medium") as "low" | "medium" | "high";
+  await applyFootballIqForMatch(matchId, risk);
+  await refreshTrashTalkForMatch(matchId);
   await scoreDailyChallengeForMatch(matchId);
 
   const uniqueUsers = [...new Set(affectedUserIds)];

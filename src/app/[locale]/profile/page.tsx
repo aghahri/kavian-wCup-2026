@@ -7,6 +7,9 @@ import { ProfileHero } from "@/components/ProfileHero";
 import { ReferralBanner } from "@/components/ReferralBanner";
 import { ShareButtons } from "@/components/ShareButtons";
 import { syncUserBadges } from "@/lib/badges";
+import { getFootballIqRanks } from "@/lib/football-iq";
+import { getUserStreak } from "@/lib/streak-engine";
+import { levelTitle } from "@/lib/xp-levels";
 import { getCountryName } from "@/lib/countries";
 import { formatDate, formatNumber } from "@/lib/format";
 import { getCountryFromE164 } from "@/lib/phone";
@@ -27,6 +30,7 @@ export default async function ProfilePage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("profile");
+  const tiq = await getTranslations("footballIq");
   const tn = await getTranslations("notifications");
   const tb = await getTranslations("badges");
   const ts = await getTranslations("share");
@@ -34,7 +38,7 @@ export default async function ProfilePage({ params }: PageProps) {
   const session = await getCurrentUser();
   if (!session) redirect(`/${locale}/login`);
 
-  const [user, rank, badges, notifPrefs] = await Promise.all([
+  const [user, rank, badges, notifPrefs, iqRanks, streak] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.id },
       include: {
@@ -50,6 +54,8 @@ export default async function ProfilePage({ params }: PageProps) {
       create: { userId: session.id },
       update: {},
     }),
+    getFootballIqRanks(session.id),
+    getUserStreak(session.id),
   ]);
 
   if (!user) redirect(`/${locale}/login`);
@@ -98,7 +104,10 @@ export default async function ProfilePage({ params }: PageProps) {
         {[
           { label: t("totalPoints"), value: totalPoints },
           { label: t("rank"), value: rank ?? "—" },
+          { label: `🧠 ${tiq("yourIq")}`, value: iqRanks?.footballIq ?? 100 },
           { label: t("referrals"), value: user._count.referrals },
+          { label: levelTitle(user.userLevel, locale), value: `${user.xp} XP` },
+          { label: t("streak"), value: streak.flames || streak.current },
           { label: t("predictions"), value: user._count.predictions },
         ].map((stat) => (
           <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">

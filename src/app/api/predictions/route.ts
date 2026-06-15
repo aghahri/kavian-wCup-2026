@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { isPredictionOpen } from "@/lib/format";
+import { completeMission } from "@/lib/missions";
 import { prisma } from "@/lib/prisma";
+import { recordUserActivity } from "@/lib/streak-engine";
+import { awardXp } from "@/lib/xp-levels";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -46,6 +49,17 @@ export async function POST(request: Request) {
       update: { homeScore, awayScore },
       create: { userId: user.id, matchId, homeScore, awayScore },
     });
+
+    const count = await prisma.prediction.count({
+      where: {
+        userId: user.id,
+        createdAt: { gte: new Date(new Date().toISOString().slice(0, 10) + "T00:00:00.000Z") },
+      },
+    });
+    if (count >= 3) await completeMission(user.id, "predict_3");
+
+    await recordUserActivity(user.id, "prediction");
+    await awardXp(user.id, 5);
 
     return NextResponse.json({ prediction });
   } catch {

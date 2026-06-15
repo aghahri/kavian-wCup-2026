@@ -14,6 +14,10 @@
     "schools": "المدارس",
     "referrals": "الدعوات",
     "daily": "التحدي اليومي",
+    "secondChance": "الفرصة الثانية",
+    "crowd": "توقعات الجمهور",
+    "recap": "ملخص اليوم",
+    "missions": "المهام",
     "tournaments": "البطولات",
     "profile": "الملف الشخصي",
     "admin": "الإدارة",
@@ -63,7 +67,22 @@
     "pointsLabel": "النقاط",
     "exactLabel": "دقيق",
     "correctLabel": "صحيح",
-    "predictionsLabel": "توقعات"
+    "predictionsLabel": "توقعات",
+    "secondChanceTitle": "لم يفت الأوان",
+    "secondChanceDesc": "انضم من الآن — كأس العالم فرصة ثانية",
+    "daysLeft": "يوم متبقي",
+    "matchesLeft": "مباراة متبقية",
+    "footballIq": "ذكاء كرة القدم",
+    "global": "عالمي",
+    "streak": "سلسلة النشاط",
+    "daysStreak": "يوم متتالي",
+    "crowdPick": "توقع الجمهور",
+    "aiPick": "اختيار الذكاء اليوم",
+    "myLeagues": "دورياتي",
+    "dailyRecap": "ملخص اليوم",
+    "missions": "مهام اليوم",
+    "fanMap": "خريطة المشجعين",
+    "referrals": "دعوة الأصدقاء"
   },
   "fixtures": {
     "title": "جدول المباريات",
@@ -148,7 +167,8 @@
     "saveError": "تعذر الحفظ. حاول مرة أخرى.",
     "predictNow": "توقع الآن",
     "shareProfileText": "تابع توقعاتي لكأس العالم على كافيان فوتبول — {name}",
-    "referralStats": "إحصائيات الدعوة والنقاط"
+    "referralStats": "إحصائيات الدعوة والنقاط",
+    "streak": "السلسلة"
   },
   "badges": {
     "earlySupporter": "داعم مبكر",
@@ -329,7 +349,8 @@
     "type_company": "شركة",
     "type_public": "عام",
     "privacy_private": "خاص",
-    "privacy_public": "عام"
+    "privacy_public": "عام",
+    "trashTalk": "مزاح الدوري"
   },
   "ai": {
     "title": "نبض ذكاء كرة القدم",
@@ -430,6 +451,73 @@
     "inviteScore": "نقاط الدعوة",
     "leaderboard": "جدول الداعين",
     "backProfile": "الملف الشخصي"
+  },
+  "secondChance": {
+    "title": "كأس العالم فرصة ثانية",
+    "subtitle": "ابدأ اليوم — الماضي لا يهم",
+    "badge": "فرصة ثانية",
+    "heroTitle": "لم يفت الأوان.",
+    "heroSubtitle": "انضم للمسابقة من الآن.",
+    "daysLeft": "يوم متبقي",
+    "matchesLeft": "مباراة متبقية",
+    "pointsLeft": "نقاط ممكنة",
+    "cta": "ابدأ من اليوم",
+    "todayChampion": "بطل اليوم",
+    "weekChampion": "بطل الأسبوع",
+    "knockoutChampion": "بطل خروج المغلوب",
+    "finalChampion": "بطل المرحلة النهائية",
+    "emptyBoard": "لا نقاط بعد",
+    "pts": "نقطة"
+  },
+  "footballIq": {
+    "title": "ذكاء كرة القدم",
+    "subtitle": "مستوى معرفتك بالتوقعات",
+    "yourIq": "ذكاءك في كرة القدم",
+    "globalRank": "الترتيب العالمي",
+    "nationalRank": "الترتيب الوطني",
+    "categories": "الفئات",
+    "improve": "توقع أكثر لرفع ذكائك",
+    "category_beginner": "مبتدئ",
+    "category_casual": "مشجع عادي",
+    "category_analyst": "محلل",
+    "category_expert": "خبير",
+    "category_elite": "نخبة",
+    "category_master": "أسطورة كأس العالم"
+  },
+  "crowd": {
+    "title": "توقعات الجمهور",
+    "subtitle": "ماذا يظن معظم المستخدمين؟",
+    "upcoming": "المباريات القادمة",
+    "empty": "لا توقعات كافية بعد",
+    "draw": "تعادل",
+    "basedOn": "بناءً على {count} توقع",
+    "surprises": "أكثر المباريات مفاجأة",
+    "crowdWrong": "الأغلبية ظنت خطأً.",
+    "crowdRight": "{pct}٪ من المستخدمين توقعوا بشكل صحيح."
+  },
+  "recap": {
+    "title": "ملخص اليوم",
+    "subtitle": "أبرز لحظات اليوم",
+    "badge": "اليوم",
+    "surprises": "٣ مفاجآت كبرى",
+    "noSurprises": "لا مباريات منتهية اليوم",
+    "topPredictor": "أفضل متوقع",
+    "hardestMatch": "أصعب مباراة",
+    "bestLeague": "أفضل دوري",
+    "funFact": "حقيقة ممتعة",
+    "shareText": "شاهد ملخص كافيان فوتبول اليوم!",
+    "predictNow": "توقع الآن"
+  },
+  "missions": {
+    "title": "مهام كأس العالم",
+    "subtitle": "أكمل المهام اليومية لكسب XP",
+    "xp": "نقاط الخبرة",
+    "go": "اذهب",
+    "mission_predict_3": "توقع ٣ مباريات",
+    "mission_invite_friend": "ادعُ صديقاً",
+    "mission_visit_ai": "زر صفحة الذكاء",
+    "mission_join_league": "انضم لدوري",
+    "mission_share_result": "شارك نتيجة"
   },
   "errors": {
     "network": "تعذر الاتصال بالخادم",

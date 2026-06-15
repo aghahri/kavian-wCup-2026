@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { NO_STORE_HEADERS } from "@/lib/api-headers";
 import { requireUser } from "@/lib/auth";
 import { markLeagueInviteJoined } from "@/lib/league-invite-stats";
+import { completeMission } from "@/lib/missions";
 import { getLeagueByCode } from "@/lib/private-leagues";
 import { prisma } from "@/lib/prisma";
 
@@ -29,6 +30,7 @@ export async function POST(_request: Request, context: RouteContext) {
     });
 
     await markLeagueInviteJoined(league.id, user.id);
+    await completeMission(user.id, "join_league");
 
     return NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
   } catch (error) {

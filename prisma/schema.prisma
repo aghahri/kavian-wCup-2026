@@ -30,13 +30,22 @@ model User {
   referralPoints          Int                      @default(0)
   dailyStreak             Int                      @default(0)
   lastDailyChallengeDate  String?
+  footballIq              Int                      @default(100)
+  xp                      Int                      @default(0)
+  userLevel               Int                      @default(1)
+  activityStreak          Int                      @default(0)
+  bestActivityStreak      Int                      @default(0)
+  lastActivityAt          DateTime?
   ownedLeagues            PrivateLeague[]          @relation("LeagueOwner")
   leagueMemberships       PrivateLeagueMember[]
   dailyEntries            DailyChallengeEntry[]
   notificationPrefs       UserNotificationPrefs?
+  missionProgress         UserMissionProgress[]
 
   @@index([referredById])
   @@index([createdAt])
+  @@index([footballIq])
+  @@index([xp])
 }
 
 model ReferralClick {
@@ -165,6 +174,7 @@ model PrivateLeague {
   owner        User                     @relation("LeagueOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members      PrivateLeagueMember[]
   inviteClicks PrivateLeagueInviteClick[]
+  trashTalk    LeagueTrashTalk?
 
   @@index([ownerId])
   @@index([type])
@@ -234,6 +244,36 @@ model Prediction {
 
   @@unique([userId, matchId])
   @@index([matchId])
+}
+
+model LeagueTrashTalk {
+  id        String        @id @default(cuid())
+  leagueId  String        @unique
+  linesFa   String
+  linesEn   String?
+  linesAr   String?
+  updatedAt DateTime      @default(now()) @updatedAt
+  league    PrivateLeague @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+}
+
+model DailyRecap {
+  id        String   @id @default(cuid())
+  recapDate String   @unique
+  dataJson  String
+  createdAt DateTime @default(now())
+}
+
+model UserMissionProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  missionDate String
+  missionKey  String
+  completed   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, missionDate, missionKey])
+  @@index([userId, missionDate])
 }
 
 model UiTranslation {

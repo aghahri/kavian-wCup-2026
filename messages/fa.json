@@ -14,6 +14,10 @@
     "schools": "مدارس",
     "referrals": "دعوت‌ها",
     "daily": "چالش روزانه",
+    "secondChance": "شانس دوم",
+    "crowd": "پیش‌بینی مردم",
+    "recap": "خلاصه روز",
+    "missions": "ماموریت‌ها",
     "tournaments": "تورنمنت‌ها",
     "profile": "پروفایل",
     "admin": "مدیریت",
@@ -63,7 +67,22 @@
     "pointsLabel": "امتیاز",
     "exactLabel": "دقیق",
     "correctLabel": "درست",
-    "predictionsLabel": "پیش‌بینی"
+    "predictionsLabel": "پیش‌بینی",
+    "secondChanceTitle": "هنوز دیر نشده",
+    "secondChanceDesc": "از همین الان وارد مسابقه شو — جام جهانی دوم شانس",
+    "daysLeft": "روز مانده",
+    "matchesLeft": "بازی باقی‌مانده",
+    "footballIq": "هوش فوتبالی",
+    "global": "جهانی",
+    "streak": "استریک فعالیت",
+    "daysStreak": "روز پیاپی",
+    "crowdPick": "پیش‌بینی اکثریت",
+    "aiPick": "انتخاب هوش امروز",
+    "myLeagues": "لیگ‌های من",
+    "dailyRecap": "خلاصه امروز",
+    "missions": "ماموریت‌های امروز",
+    "fanMap": "نقشه هواداران",
+    "referrals": "دعوت دوستان"
   },
   "fixtures": {
     "title": "برنامه بازی‌ها",
@@ -148,7 +167,8 @@
     "saveError": "ذخیره نشد. دوباره تلاش کنید.",
     "predictNow": "پیش‌بینی کن",
     "shareProfileText": "پیش‌بینی‌های جام جهانی من را در کاویان فوتبال دنبال کن — {name}",
-    "referralStats": "آمار دعوت و امتیاز"
+    "referralStats": "آمار دعوت و امتیاز",
+    "streak": "استریک"
   },
   "badges": {
     "earlySupporter": "حامی اولیه",
@@ -329,7 +349,8 @@
     "type_company": "شرکت",
     "type_public": "عمومی",
     "privacy_private": "خصوصی",
-    "privacy_public": "عمومی"
+    "privacy_public": "عمومی",
+    "trashTalk": "شوخی لیگ"
   },
   "ai": {
     "title": "ضربان هوش فوتبال",
@@ -430,6 +451,73 @@
     "inviteScore": "امتیاز دعوت",
     "leaderboard": "جدول دعوت‌کنندگان",
     "backProfile": "پروفایل"
+  },
+  "secondChance": {
+    "title": "جام جهانی دوم شانس",
+    "subtitle": "از امروز شروع کن — گذشته مهم نیست",
+    "badge": "شانس دوم",
+    "heroTitle": "هنوز دیر نشده.",
+    "heroSubtitle": "از همین الان وارد مسابقه شو.",
+    "daysLeft": "روز مانده",
+    "matchesLeft": "بازی باقی‌مانده",
+    "pointsLeft": "امتیاز ممکن",
+    "cta": "از همین امروز شروع کن",
+    "todayChampion": "قهرمان امروز",
+    "weekChampion": "قهرمان این هفته",
+    "knockoutChampion": "قهرمان حذفی",
+    "finalChampion": "قهرمان مرحله نهایی",
+    "emptyBoard": "هنوز امتیازی ثبت نشده",
+    "pts": "امتیاز"
+  },
+  "footballIq": {
+    "title": "هوش فوتبالی",
+    "subtitle": "دانش و دقت پیش‌بینی تو",
+    "yourIq": "هوش فوتبالی شما",
+    "globalRank": "رتبه جهانی",
+    "nationalRank": "رتبه ملی",
+    "categories": "دسته‌بندی‌ها",
+    "improve": "پیش‌بینی کن و هوشت را بالا ببر",
+    "category_beginner": "تازه‌کار",
+    "category_casual": "هوادار عادی",
+    "category_analyst": "تحلیلگر",
+    "category_expert": "متخصص",
+    "category_elite": "نخبه",
+    "category_master": "استاد جام جهانی"
+  },
+  "crowd": {
+    "title": "پیش‌بینی مردم",
+    "subtitle": "اکثریت کاربران چه فکر می‌کنند؟",
+    "upcoming": "بازی‌های آینده",
+    "empty": "هنوز پیش‌بینی کافی نیست",
+    "draw": "مساوی",
+    "basedOn": "بر اساس {count} پیش‌بینی",
+    "surprises": "غافلگیرکننده‌ترین بازی‌ها",
+    "crowdWrong": "اکثریت اشتباه فکر می‌کردند.",
+    "crowdRight": "{pct}٪ کاربران درست پیش‌بینی کردند."
+  },
+  "recap": {
+    "title": "خلاصه روز",
+    "subtitle": "بزرگ‌ترین لحظات امروز در کاویان فوتبال",
+    "badge": "امروز",
+    "surprises": "۳ غافلگیری بزرگ",
+    "noSurprises": "امروز بازی تمام‌شده‌ای نبود",
+    "topPredictor": "برترین پیش‌بینی‌کننده",
+    "hardestMatch": "سخت‌ترین بازی",
+    "bestLeague": "بهترین لیگ",
+    "funFact": "نکته جالب",
+    "shareText": "خلاصه امروز کاویان فوتبال را ببین!",
+    "predictNow": "پیش‌بینی کن"
+  },
+  "missions": {
+    "title": "ماموریت‌های جام جهانی",
+    "subtitle": "هر روز ماموریت انجام بده و XP بگیر",
+    "xp": "امتیاز تجربه",
+    "go": "برو",
+    "mission_predict_3": "۳ بازی پیش‌بینی کن",
+    "mission_invite_friend": "۱ دوست دعوت کن",
+    "mission_visit_ai": "صفحه هوش فوتبال را ببین",
+    "mission_join_league": "عضو یک لیگ شو",
+    "mission_share_result": "یک نتیجه را به اشتراک بگذار"
   },
   "errors": {
     "network": "ارتباط با سرور برقرار نشد",

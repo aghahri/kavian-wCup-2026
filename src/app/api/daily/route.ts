@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { NO_STORE_HEADERS } from "@/lib/api-headers";
 import { requireUser } from "@/lib/auth";
-import {
-  getOrCreateTodayChallenge,
-  todayDateKey,
-  updateUserDailyStreak,
-} from "@/lib/daily-challenge";
+import { getOrCreateTodayChallenge, todayDateKey, updateUserDailyStreak } from "@/lib/daily-challenge";
+import { recordUserActivity } from "@/lib/streak-engine";
 import { isPredictionOpen } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -65,6 +62,7 @@ export async function POST(request: Request) {
     });
 
     await updateUserDailyStreak(user.id, todayDateKey());
+    await recordUserActivity(user.id, "daily_challenge");
 
     return NextResponse.json({ entry }, { headers: NO_STORE_HEADERS });
   } catch (error) {

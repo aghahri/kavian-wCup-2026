@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { JoinLeagueButton } from "@/components/JoinLeagueButton";
 import { LeagueLeaderboard } from "@/components/LeagueLeaderboard";
+import { RecordActivity } from "@/components/RecordActivity";
 import { ShareButtons } from "@/components/ShareButtons";
 import { getCurrentUser } from "@/lib/auth";
+import { getLeagueTrashTalk } from "@/lib/league-trash-talk";
 import {
   buildLeagueLeaderboard,
   getLeagueByCode,
@@ -30,10 +32,12 @@ export default async function LeagueDetailPage({ params }: PageProps) {
   const member = user ? await isLeagueMember(league.id, user.id) : false;
   const isOwner = user?.id === league.ownerId;
   const leaderboard = await buildLeagueLeaderboard(league.id);
+  const trashTalk = await getLeagueTrashTalk(league.id, locale);
   const inviteUrl = getLeagueInviteUrl(league.code);
 
   return (
     <div className="space-y-8">
+      <RecordActivity type="league_visit" />
       <div className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-600/20 via-[#0b1f3a] to-[#071526] p-6 sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
           {t(`type_${league.type}`)} · {t(`privacy_${league.privacy}`)}
@@ -81,6 +85,19 @@ export default async function LeagueDetailPage({ params }: PageProps) {
           facebook: ts("facebook"),
         }}
       />
+
+      {trashTalk.length > 0 && (
+        <section className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-5">
+          <h2 className="mb-3 text-lg font-bold text-amber-200">{t("trashTalk")}</h2>
+          <ul className="space-y-2">
+            {trashTalk.map((line, i) => (
+              <li key={i} className="text-sm text-amber-100">
+                {line.emoji} {line.text}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
         <h2 className="mb-4 text-lg font-bold text-white">{t("leaderboard")}</h2>
