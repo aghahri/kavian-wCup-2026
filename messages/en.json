@@ -130,6 +130,7 @@
   },
   "matchCenter": {
     "back": "Back to fixtures",
+    "backToFixtures": "Back to fixtures",
     "vs": "VS",
     "statusUpcoming": "Upcoming",
     "statusLive": "Live",
@@ -162,7 +163,15 @@
     "shareText": "{home} {score} {away} — Kavian Football",
     "shareTextUpcoming": "{home} vs {away} — Kavian Football",
     "viewMatch": "Match center",
-    "missingScoreWarning": "This match has ended but has no final score yet."
+    "missingScoreWarning": "This match has ended but has no final score yet.",
+    "needsResult": "Awaiting result",
+    "awaitingVerification": "Awaiting source verification",
+    "liveStartedMessage": "Match has started; final score pending.",
+    "awaitingResultVerification": "Awaiting result confirmation",
+    "awaitingSourceVerification": "Awaiting source verification",
+    "aiPendingResult": "Analysis will update after the result is recorded.",
+    "submitResult": "Submit result",
+    "scoreNotRecorded": "Score not recorded yet"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -226,7 +235,9 @@
     "x": "X",
     "facebook": "Facebook",
     "shokoofaloo": "Shokoofaloo",
-    "shokoofalooTooltip": "Share this link on Shokoofaloo too"
+    "shokoofalooTooltip": "Share this link on Shokoofaloo too",
+    "copy": "Copy link",
+    "copied": "Copied!"
   },
   "login": {
     "title": "Login",

@@ -4,7 +4,7 @@ import { AppNav } from "@/components/AppNav";
 import { HeaderAuth } from "@/components/HeaderAuth";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { getCurrentUser } from "@/lib/auth";
-import { getNavItemsForSurface } from "@/lib/navigation";
+import { getCompactFooterNavItems, getNavItemsForSurface } from "@/lib/navigation";
 import type { Locale } from "@/i18n/routing";
 
 type HeaderProps = {
@@ -17,7 +17,7 @@ export async function Header({ locale }: HeaderProps) {
   const ctx = { isLoggedIn: Boolean(user), isAdmin: Boolean(user?.isAdmin) };
 
   const desktopNav = getNavItemsForSurface("header", locale, ctx, (key) => t(key));
-  const mobileNav = getNavItemsForSurface("mobile", locale, ctx, (key) => t(key));
+  const mobileNav = getCompactFooterNavItems(locale, ctx, (key) => t(key));
 
   const authLabels = {
     login: t("login"),

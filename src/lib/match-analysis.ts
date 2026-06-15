@@ -4,7 +4,7 @@ import {
   generateFootballAnalysis,
 } from "@/lib/ai/football-analysis";
 import { getCrowdForMatch } from "@/lib/crowd-predictions";
-import { getMatchStatus } from "@/lib/match-status";
+import { getMatchDisplayState } from "@/lib/match-status";
 import type { Match } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -52,9 +52,14 @@ export async function regenerateMatchAnalysis(match: Match) {
 }
 
 export async function getOrCreateMatchAnalysis(match: Match) {
-  const phase = getMatchStatus(match.kickoffAt, match.isFinished);
+  const displayState = getMatchDisplayState(match);
 
-  if (phase === "finished" || phase === "live") {
+  if (displayState === "live_or_needs_result") {
+    const existing = await prisma.matchAnalysis.findUnique({ where: { matchId: match.id } });
+    return existing ?? regenerateMatchAnalysis(match);
+  }
+
+  if (displayState === "finished_unverified" || displayState === "finished_verified") {
     return regenerateMatchAnalysis(match);
   }
 

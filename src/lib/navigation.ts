@@ -75,6 +75,25 @@ export function getNavItemsForSurface(
   }));
 }
 
+/** Compact footer links — avoid duplicating full header nav on mobile. */
+export const FOOTER_COMPACT_IDS = ["home", "fixtures", "predict", "leagues", "ai"] as const;
+
+export function getCompactFooterNavItems(
+  locale: Locale,
+  ctx: NavContext,
+  label: (key: string) => string
+) {
+  return NAV_ITEMS.filter((item) => FOOTER_COMPACT_IDS.includes(item.id as (typeof FOOTER_COMPACT_IDS)[number]))
+    .filter((item) => isNavItemVisible(item, ctx))
+    .map((item) => ({
+      id: item.id,
+      href: resolveNavHref(item, locale, ctx),
+      label: label(item.labelKey),
+      requiresAuth: item.visibility === "auth" && !ctx.isLoggedIn,
+      isAdmin: item.visibility === "admin",
+    }));
+}
+
 export function isNavActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
   if (pathname.startsWith(`${href}/`)) return true;

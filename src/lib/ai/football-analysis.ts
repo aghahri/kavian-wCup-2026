@@ -252,7 +252,7 @@ export function generateFootballAnalysis(
   match: Match,
   stats: PredictionStats = { total: 0, exactCount: 0, correctResultCount: 0, wrongCount: 0, wrongPct: 0 }
 ): FootballAnalysis {
-  const phase = getMatchStatus(match.kickoffAt, match.isFinished);
+  const phase = getMatchStatus(match.kickoffAt, match.isFinished, match.homeScore, match.awayScore);
   if (phase === "finished" && match.homeScore !== null && match.awayScore !== null) {
     return generateFinishedAnalysis(match, stats);
   }

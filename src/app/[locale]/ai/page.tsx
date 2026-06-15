@@ -13,7 +13,7 @@ import {
   buildPredictionStats,
 } from "@/lib/ai/football-analysis";
 import { hasHighlights, highlightsWatchUrl } from "@/lib/highlights";
-import { getMatchStatus } from "@/lib/match-status";
+import { getMatchDisplayState } from "@/lib/match-status";
 import { getAwayTeamName, getHomeTeamName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/routing";
@@ -31,8 +31,11 @@ export default async function AiPulsePage({ params }: PageProps) {
 
   const allMatches = await prisma.match.findMany({ orderBy: { kickoffAt: "desc" } });
 
-  const upcoming = allMatches.filter((m) => getMatchStatus(m.kickoffAt, m.isFinished) === "upcoming");
-  const finished = allMatches.filter((m) => getMatchStatus(m.kickoffAt, m.isFinished) === "finished");
+  const upcoming = allMatches.filter((m) => getMatchDisplayState(m) === "upcoming");
+  const finished = allMatches.filter((m) => {
+    const s = getMatchDisplayState(m);
+    return s === "finished_unverified" || s === "finished_verified";
+  });
 
   const upcomingAnalyses = await Promise.all(
     upcoming.slice(0, 8).map(async (match) => ({

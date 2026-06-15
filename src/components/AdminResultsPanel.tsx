@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import type { AdminResultRow } from "@/lib/admin-results";
 import { parseResultPaste } from "@/lib/result-import-parser";
 
@@ -32,6 +32,7 @@ type Labels = {
 
 type AdminResultsPanelProps = {
   initialRows: AdminResultRow[];
+  highlightMatchId?: string | null;
   labels: Labels;
 };
 
@@ -233,9 +234,15 @@ function ResultEditor({
   );
 }
 
-export function AdminResultsPanel({ initialRows, labels }: AdminResultsPanelProps) {
+export function AdminResultsPanel({ initialRows, highlightMatchId, labels }: AdminResultsPanelProps) {
   const router = useRouter();
   const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    if (!highlightMatchId) return;
+    const el = document.getElementById(`result-editor-${highlightMatchId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightMatchId]);
   const [paste, setPaste] = useState("");
   const [pasteTarget, setPasteTarget] = useState(initialRows[0]?.id ?? "");
 
@@ -320,7 +327,11 @@ export function AdminResultsPanel({ initialRows, labels }: AdminResultsPanelProp
 
       <div className="space-y-4">
         {kickedOff.map((row) => (
-          <div key={row.id} id={`result-editor-${row.id}`}>
+          <div
+            key={row.id}
+            id={`result-editor-${row.id}`}
+            className={highlightMatchId === row.id ? "ring-2 ring-emerald-400/50 rounded-2xl" : ""}
+          >
             <ResultEditor row={row} labels={labels} onToast={showToast} />
           </div>
         ))}

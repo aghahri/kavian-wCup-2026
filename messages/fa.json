@@ -130,6 +130,7 @@
   },
   "matchCenter": {
     "back": "بازگشت به برنامه",
+    "backToFixtures": "بازگشت به بازی‌ها",
     "vs": "VS",
     "statusUpcoming": "آینده",
     "statusLive": "زنده",
@@ -162,7 +163,15 @@
     "shareText": "{home} {score} {away} — کاویان فوتبال",
     "shareTextUpcoming": "{home} در برابر {away} — کاویان فوتبال",
     "viewMatch": "مرکز بازی",
-    "missingScoreWarning": "این بازی تمام شده ولی نتیجه ندارد."
+    "missingScoreWarning": "این بازی تمام شده ولی نتیجه ندارد.",
+    "needsResult": "در انتظار نتیجه",
+    "awaitingVerification": "در انتظار تأیید منبع",
+    "liveStartedMessage": "بازی شروع شده؛ نتیجه در انتظار ثبت است.",
+    "awaitingResultVerification": "در انتظار تأیید نتیجه",
+    "awaitingSourceVerification": "در انتظار تأیید منبع",
+    "aiPendingResult": "تحلیل پس از ثبت نتیجه به‌روزرسانی می‌شود.",
+    "submitResult": "ثبت نتیجه",
+    "scoreNotRecorded": "نتیجه هنوز ثبت نشده"
   },
   "leaderboard": {
     "title": "جدول امتیازات",
@@ -226,7 +235,9 @@
     "x": "ایکس",
     "facebook": "فیسبوک",
     "shokoofaloo": "شکوفه‌آلو",
-    "shokoofalooTooltip": "این لینک را در شکوفه‌آلو هم به اشتراک بگذار"
+    "shokoofalooTooltip": "این لینک را در شکوفه‌آلو هم به اشتراک بگذار",
+    "copy": "کپی لینک",
+    "copied": "کپی شد!"
   },
   "login": {
     "title": "ورود",

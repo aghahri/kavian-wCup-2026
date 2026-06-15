@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { MatchCountdown } from "@/components/MatchCountdown";
-import { MatchStatusBadge } from "@/components/MatchStatusBadge";
+import { MatchDisplayBadge } from "@/components/MatchDisplayBadge";
 import { TeamFlag } from "@/components/TeamFlag";
 import { formatDate, isPredictionOpen } from "@/lib/format";
 import { hasHighlights, highlightsWatchUrl } from "@/lib/highlights";
-import { getMatchStatus } from "@/lib/match-status";
+import { getMatchDisplayState } from "@/lib/match-status";
 import type { Locale } from "@/i18n/routing";
 
 type MatchCardProps = {
@@ -56,19 +56,29 @@ export async function MatchCard({
   const t = await getTranslations({ locale, namespace: "match" });
   const tc = await getTranslations({ locale, namespace: "matchCenter" });
   const tp = await getTranslations({ locale, namespace: "predict" });
-  const open = isPredictionOpen(kickoffAt, isFinished);
-  const status = getMatchStatus(kickoffAt, isFinished);
-  const kickedOff = kickoffAt.getTime() < Date.now();
-  const missingScore = kickedOff && (homeScore === null || awayScore === null || !isFinished);
 
-  const isVerified = Boolean(scoreVerifiedAt);
+  const matchLike = {
+    kickoffAt,
+    isFinished,
+    homeScore,
+    awayScore,
+    scoreVerifiedAt,
+  };
+  const displayState = getMatchDisplayState(matchLike);
+  const open = isPredictionOpen(kickoffAt, isFinished);
+  const isFinishedDisplay =
+    displayState === "finished_unverified" || displayState === "finished_verified";
+
   const hl = hasHighlights(highlightsUrl, highlightsEmbedUrl);
   const watchUrl = highlightsWatchUrl(highlightsUrl, highlightsEmbedUrl);
   const aiUpdated = Boolean(aiRefreshedAt);
 
-  const statusLabels = {
+  const badgeLabels = {
     upcoming: t("statusUpcoming"),
     live: t("statusLive"),
+    needsResult: tc("scoreNotRecorded"),
+    awaitingVerification: tc("awaitingVerification"),
+    verified: tc("verifiedResult"),
     finished: t("statusFinished"),
   };
 
@@ -84,7 +94,7 @@ export async function MatchCard({
     <article
       className={`rounded-2xl border bg-white/5 p-4 shadow-lg backdrop-blur-sm transition hover:border-emerald-500/30 ${
         featured ? "border-emerald-500/40 ring-1 ring-emerald-500/20" : "border-white/10"
-      } ${status === "live" ? "border-red-500/30" : ""}`}
+      } ${displayState === "live_or_needs_result" ? "border-amber-500/25" : ""}`}
     >
       <Link href={`/${locale}/matches/${id}`} className="block">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -92,14 +102,11 @@ export async function MatchCard({
             <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-200">
               {stage}
             </span>
-            <MatchStatusBadge kickoffAt={kickoffAt} isFinished={isFinished} labels={statusLabels} />
-            {isFinished && isVerified && (
-              <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-200">✓</span>
-            )}
-            {isFinished && hl && (
+            <MatchDisplayBadge match={matchLike} labels={badgeLabels} />
+            {isFinishedDisplay && hl && (
               <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-200">🎬</span>
             )}
-            {isFinished && aiUpdated && (
+            {isFinishedDisplay && aiUpdated && (
               <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs text-violet-200">🤖</span>
             )}
           </div>
@@ -110,7 +117,7 @@ export async function MatchCard({
           <div className="flex flex-col items-center gap-2">
             <TeamFlag teamName={homeTeam} size={featured ? 40 : 32} />
             <p className="text-base font-bold text-white">{homeTeamFa}</p>
-            {isFinished && homeScore !== null && (
+            {homeScore !== null && isFinishedDisplay && (
               <p className="text-2xl font-black text-emerald-300">{homeScore}</p>
             )}
           </div>
@@ -118,14 +125,14 @@ export async function MatchCard({
           <div className="flex flex-col items-center gap-2">
             <TeamFlag teamName={awayTeam} size={featured ? 40 : 32} />
             <p className="text-base font-bold text-white">{awayTeamFa}</p>
-            {isFinished && awayScore !== null && (
+            {awayScore !== null && isFinishedDisplay && (
               <p className="text-2xl font-black text-emerald-300">{awayScore}</p>
             )}
           </div>
         </div>
       </Link>
 
-      {status === "upcoming" && (
+      {displayState === "upcoming" && (
         <div className="mt-4">
           <MatchCountdown
             targetIso={kickoffAt.toISOString()}
@@ -136,9 +143,9 @@ export async function MatchCard({
         </div>
       )}
 
-      {kickedOff && missingScore && (
-        <p className="mt-2 rounded-lg bg-amber-500/15 px-3 py-2 text-center text-xs text-amber-200">
-          {tc("missingScoreWarning")}
+      {displayState === "live_or_needs_result" && (
+        <p className="mt-3 rounded-lg bg-amber-500/15 px-3 py-2 text-center text-xs text-amber-200">
+          {tc("scoreNotRecorded")}
         </p>
       )}
 
@@ -148,7 +155,7 @@ export async function MatchCard({
             home: userPrediction.homeScore,
             away: userPrediction.awayScore,
           })}
-          {isFinished && (
+          {isFinishedDisplay && (
             <span className="ms-2 text-emerald-300">
               {tp("pointsEarned", { points: userPrediction.points })}
             </span>
@@ -156,10 +163,15 @@ export async function MatchCard({
         </div>
       )}
 
-      {isFinished && isVerified && scoreSourceUrl && (
-        <p className="mt-2 text-center text-xs text-white/50">
-          <a href={scoreSourceUrl} target="_blank" rel="noopener noreferrer" className="text-sky-300 hover:underline">
-            ✓ {tc("verifiedResult")} — {scoreSourceName ?? tc("source")}
+      {isFinishedDisplay && scoreSourceUrl && (
+        <p className="mt-2 text-center text-xs">
+          <a
+            href={scoreSourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sky-300 hover:underline"
+          >
+            {scoreSourceName ?? tc("source")}
           </a>
         </p>
       )}
@@ -167,13 +179,19 @@ export async function MatchCard({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
         <span
           className={`text-xs font-medium ${
-            isFinished ? "text-white/50" : open ? "text-emerald-300" : "text-amber-300"
+            displayState === "upcoming" && open
+              ? "text-emerald-300"
+              : "text-white/50"
           }`}
         >
-          {isFinished ? t("finished") : open ? t("open") : t("closed")}
+          {displayState === "upcoming" && open
+            ? t("open")
+            : isFinishedDisplay
+              ? t("finished")
+              : t("closed")}
         </span>
         <div className="flex flex-wrap gap-2">
-          {isFinished && hl && watchUrl && (
+          {isFinishedDisplay && hl && watchUrl && (
             <a
               href={watchUrl}
               target="_blank"
@@ -189,7 +207,7 @@ export async function MatchCard({
           >
             {tc("viewMatch")}
           </Link>
-          {showPredictLink && open && (
+          {showPredictLink && open && displayState === "upcoming" && (
             <Link
               href={`/${locale}/predict?match=${id}`}
               className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-medium text-white transition hover:bg-emerald-400"

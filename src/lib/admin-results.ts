@@ -1,4 +1,4 @@
-import { getMatchStatus } from "@/lib/match-status";
+import { getMatchDisplayState } from "@/lib/match-status";
 import { prisma } from "@/lib/prisma";
 
 export type AdminResultRow = {
@@ -40,14 +40,12 @@ export async function getAdminResultsData(): Promise<{
   });
 
   const now = Date.now();
-  const twoHoursMs = 2 * 60 * 60 * 1000;
 
   const rows: AdminResultRow[] = matches.map((m) => {
-    const phase = getMatchStatus(m.kickoffAt, m.isFinished);
+    const displayState = getMatchDisplayState(m);
     const kickedOff = m.kickoffAt.getTime() < now;
-    const kickoffPassed = m.kickoffAt.getTime() + twoHoursMs < now;
     const hasScore = m.homeScore !== null && m.awayScore !== null;
-    const finished = m.isFinished && hasScore;
+    const finished = displayState === "finished_unverified" || displayState === "finished_verified";
 
     return {
       id: m.id,
@@ -66,7 +64,12 @@ export async function getAdminResultsData(): Promise<{
       highlightsEmbedUrl: m.highlightsEmbedUrl,
       highlightsProvider: m.highlightsProvider,
       aiRefreshedAt: m.aiRefreshedAt,
-      phase,
+      phase:
+        displayState === "upcoming"
+          ? "upcoming"
+          : displayState === "live_or_needs_result"
+            ? "live"
+            : "finished",
       kickedOff,
       missingScore: kickedOff && (!hasScore || !m.isFinished),
       missingVerification: finished && !m.scoreVerifiedAt,

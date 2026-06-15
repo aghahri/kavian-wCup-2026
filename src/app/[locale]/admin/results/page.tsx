@@ -6,12 +6,16 @@ import { getAdminResultsData } from "@/lib/admin-results";
 import { getCurrentUser } from "@/lib/auth";
 import type { Locale } from "@/i18n/routing";
 
-type PageProps = { params: Promise<{ locale: Locale }> };
+type PageProps = {
+  params: Promise<{ locale: Locale }>;
+  searchParams: Promise<{ matchId?: string }>;
+};
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminResultsPage({ params }: PageProps) {
+export default async function AdminResultsPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
+  const { matchId } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("admin");
 
@@ -35,6 +39,7 @@ export default async function AdminResultsPage({ params }: PageProps) {
 
       <AdminResultsPanel
         initialRows={data.matches}
+        highlightMatchId={matchId ?? null}
         labels={{
           pasteTitle: t("resultsPasteTitle"),
           pastePlaceholder: t("resultsPastePlaceholder"),

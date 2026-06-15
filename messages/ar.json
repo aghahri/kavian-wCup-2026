@@ -130,6 +130,7 @@
   },
   "matchCenter": {
     "back": "العودة إلى المباريات",
+    "backToFixtures": "العودة إلى المباريات",
     "vs": "VS",
     "statusUpcoming": "قادمة",
     "statusLive": "مباشر",
@@ -162,7 +163,15 @@
     "shareText": "{home} {score} {away} — كافيان فوتبول",
     "shareTextUpcoming": "{home} ضد {away} — كافيان فوتبول",
     "viewMatch": "مركز المباراة",
-    "missingScoreWarning": "انتهت هذه المباراة لكن لا يوجد نتيجة نهائية."
+    "missingScoreWarning": "انتهت هذه المباراة لكن لا يوجد نتيجة نهائية.",
+    "needsResult": "في انتظار النتيجة",
+    "awaitingVerification": "في انتظار تأكيد المصدر",
+    "liveStartedMessage": "بدأت المباراة؛ النتيجة في انتظار التسجيل.",
+    "awaitingResultVerification": "في انتظار تأكيد النتيجة",
+    "awaitingSourceVerification": "في انتظار تأكيد المصدر",
+    "aiPendingResult": "سيتم تحديث التحليل بعد تسجيل النتيجة.",
+    "submitResult": "تسجيل النتيجة",
+    "scoreNotRecorded": "لم تُسجَّل النتيجة بعد"
   },
   "leaderboard": {
     "title": "جدول الترتيب",
@@ -226,7 +235,9 @@
     "x": "X",
     "facebook": "فيسبوك",
     "shokoofaloo": "شكوفالو",
-    "shokoofalooTooltip": "شارك هذا الرابط على شكوفالو أيضاً"
+    "shokoofalooTooltip": "شارك هذا الرابط على شكوفالو أيضاً",
+    "copy": "نسخ الرابط",
+    "copied": "تم النسخ!"
   },
   "login": {
     "title": "تسجيل الدخول",

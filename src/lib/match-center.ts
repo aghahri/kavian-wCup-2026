@@ -10,7 +10,7 @@ import { buildMatchSummary } from "@/lib/match-summary";
 import { getCrowdForMatch } from "@/lib/crowd-predictions";
 import { resolveHighlightsEmbed } from "@/lib/highlights";
 import { getAwayTeamName, getHomeTeamName, getStageName } from "@/lib/match-i18n";
-import { getMatchStatus } from "@/lib/match-status";
+import { getMatchDisplayState, hasMatchScore } from "@/lib/match-status";
 import { isPredictionOpen } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/routing";
@@ -46,15 +46,25 @@ export async function buildMatchCenterData(matchId: string, locale: Locale) {
 
   if (!match) return null;
 
-  const phase = getMatchStatus(match.kickoffAt, match.isFinished);
+  const displayState = getMatchDisplayState(match);
   const predictions = await prisma.prediction.findMany({
     where: { matchId },
     select: { homeScore: true, awayScore: true },
   });
   const stats = buildPredictionStats(predictions, match);
-  const analysis = await getOrCreateMatchAnalysis(match);
+
+  let analysis: MatchAnalysis | null = null;
+  if (displayState === "upcoming") {
+    analysis = await getOrCreateMatchAnalysis(match);
+  } else if (displayState === "finished_unverified" || displayState === "finished_verified") {
+    analysis = await getOrCreateMatchAnalysis(match);
+  }
+
   const crowd = await getCrowdForMatch(match);
-  const summary = phase === "finished" ? await buildMatchSummary(match, locale) : null;
+  const summary =
+    displayState === "finished_unverified" || displayState === "finished_verified"
+      ? await buildMatchSummary(match, locale)
+      : null;
 
   const homeName = getHomeTeamName(match, locale);
   const awayName = getAwayTeamName(match, locale);
@@ -67,20 +77,26 @@ export async function buildMatchCenterData(matchId: string, locale: Locale) {
     else winnerLabel = locale === "fa" ? "مساوی" : locale === "ar" ? "تعادل" : "Draw";
   }
 
-  const risk = RISK_LABELS[analysis.riskLevel as keyof typeof RISK_LABELS];
+  const risk = analysis
+    ? RISK_LABELS[analysis.riskLevel as keyof typeof RISK_LABELS]
+    : RISK_LABELS.medium;
   const riskLabel = locale === "fa" ? risk.fa : locale === "ar" ? risk.ar : risk.en;
 
   const surpriseLevel =
-    phase === "finished" && stats.wrongPct >= 70
+    hasMatchScore(match) && stats.wrongPct >= 70
       ? "high"
-      : phase === "finished" && stats.wrongPct >= 45
+      : hasMatchScore(match) && stats.wrongPct >= 45
         ? "medium"
         : "low";
   const surprise = SURPRISE_LABELS[surpriseLevel];
   const surpriseLabel = locale === "fa" ? surprise.fa : locale === "ar" ? surprise.ar : surprise.en;
 
-  const reasoning = getLocalizedReasoning(analysis, locale);
-  const lessonLine = phase === "finished" && reasoning.length > 4 ? reasoning[reasoning.length - 1] : null;
+  const reasoning = analysis ? getLocalizedReasoning(analysis, locale) : [];
+  const lessonLine =
+    (displayState === "finished_unverified" || displayState === "finished_verified") &&
+    reasoning.length > 4
+      ? reasoning[reasoning.length - 1]
+      : null;
   const mainReasoning = lessonLine ? reasoning.slice(0, -1) : reasoning;
 
   const embedUrl = resolveHighlightsEmbed(match.highlightsEmbedUrl, match.highlightsUrl);
@@ -88,13 +104,13 @@ export async function buildMatchCenterData(matchId: string, locale: Locale) {
 
   return {
     match,
-    phase,
+    displayState,
     homeName,
     awayName,
     stage,
     winnerLabel,
     stats,
-    analysis: analysis as MatchAnalysis,
+    analysis,
     crowd,
     summary,
     riskLabel,
@@ -104,7 +120,7 @@ export async function buildMatchCenterData(matchId: string, locale: Locale) {
     embedUrl,
     goalEvents,
     predictionOpen: isPredictionOpen(match.kickoffAt, match.isFinished, match.predictionLockOverride),
-    isVerified: Boolean(match.scoreVerifiedAt),
+    isVerified: displayState === "finished_verified",
     hasHighlights: Boolean(embedUrl || match.highlightsUrl),
     aiUpdated: Boolean(match.aiRefreshedAt),
   };

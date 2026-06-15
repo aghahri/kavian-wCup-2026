@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { MatchCountdown } from "@/components/MatchCountdown";
-import { MatchStatusBadge } from "@/components/MatchStatusBadge";
+import { MatchDisplayBadge } from "@/components/MatchDisplayBadge";
 import { ShareButtons } from "@/components/ShareButtons";
 import { TeamFlag } from "@/components/TeamFlag";
 import { formatAiPredictionLine } from "@/lib/ai/football-analysis";
+import { getCurrentUser } from "@/lib/auth";
 import { crowdTeamLabels } from "@/lib/crowd-predictions";
 import { formatDate } from "@/lib/format";
 import {
@@ -13,6 +14,7 @@ import {
   EVENT_ICONS,
   eventDescription,
 } from "@/lib/match-center";
+import { hasMatchScore } from "@/lib/match-status";
 import { getSiteUrl } from "@/lib/share";
 import type { Locale } from "@/i18n/routing";
 
@@ -25,20 +27,50 @@ export default async function MatchCenterPage({ params }: PageProps) {
   setRequestLocale(locale);
   const t = await getTranslations("matchCenter");
   const ts = await getTranslations("share");
+  const user = await getCurrentUser();
 
   const data = await buildMatchCenterData(id, locale);
   if (!data) notFound();
 
-  const { match, phase, homeName, awayName, stage, winnerLabel, stats, crowd, summary, riskLabel, surpriseLabel, reasoning, lessonLine, embedUrl, goalEvents, predictionOpen, isVerified, hasHighlights, aiUpdated } = data;
+  const {
+    match,
+    displayState,
+    homeName,
+    awayName,
+    stage,
+    winnerLabel,
+    stats,
+    analysis,
+    crowd,
+    summary,
+    riskLabel,
+    surpriseLabel,
+    reasoning,
+    lessonLine,
+    embedUrl,
+    goalEvents,
+    predictionOpen,
+    isVerified,
+    hasHighlights,
+    aiUpdated,
+  } = data;
 
   const shareUrl = `${getSiteUrl()}/${locale}/matches/${id}`;
-  const shareText = match.homeScore !== null && match.awayScore !== null
-    ? t("shareText", { home: homeName, away: awayName, score: `${match.homeScore}-${match.awayScore}` })
-    : t("shareTextUpcoming", { home: homeName, away: awayName });
+  const shareText =
+    hasMatchScore(match)
+      ? t("shareText", {
+          home: homeName,
+          away: awayName,
+          score: `${match.homeScore}-${match.awayScore}`,
+        })
+      : t("shareTextUpcoming", { home: homeName, away: awayName });
 
-  const statusLabels = {
+  const badgeLabels = {
     upcoming: t("statusUpcoming"),
     live: t("statusLive"),
+    needsResult: t("needsResult"),
+    awaitingVerification: t("awaitingVerification"),
+    verified: t("verifiedResult"),
     finished: t("statusFinished"),
   };
 
@@ -51,32 +83,32 @@ export default async function MatchCenterPage({ params }: PageProps) {
   };
 
   const labels = crowdTeamLabels(match, locale);
+  const showScores = hasMatchScore(match);
+  const isFinishedDisplay =
+    displayState === "finished_unverified" || displayState === "finished_verified";
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
-      <Link href={`/${locale}/fixtures`} className="text-sm text-emerald-300 hover:underline">
-        ← {t("back")}
+    <div className="space-y-5">
+      <Link
+        href={`/${locale}/fixtures`}
+        className="inline-block text-sm text-emerald-300 hover:underline"
+      >
+        ← {t("backToFixtures")}
       </Link>
 
-      {/* Header */}
       <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-200">
               {stage}
             </span>
-            <MatchStatusBadge kickoffAt={match.kickoffAt} isFinished={match.isFinished} labels={statusLabels} />
-            {isVerified && (
-              <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-200">
-                ✓ {t("verifiedResult")}
-              </span>
-            )}
-            {hasHighlights && (
+            <MatchDisplayBadge match={match} labels={badgeLabels} />
+            {hasHighlights && isFinishedDisplay && (
               <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-200">
                 🎬 {t("highlightsAvailable")}
               </span>
             )}
-            {aiUpdated && phase === "finished" && (
+            {aiUpdated && isFinishedDisplay && (
               <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs text-violet-200">
                 🤖 {t("aiUpdated")}
               </span>
@@ -89,7 +121,7 @@ export default async function MatchCenterPage({ params }: PageProps) {
           <div className="flex flex-col items-center gap-2">
             <TeamFlag teamName={match.homeTeam} size={52} />
             <p className="font-bold text-white">{homeName}</p>
-            {(phase === "finished" || phase === "live") && match.homeScore !== null && (
+            {showScores && (
               <p className="text-4xl font-black text-emerald-300">{match.homeScore}</p>
             )}
           </div>
@@ -97,29 +129,57 @@ export default async function MatchCenterPage({ params }: PageProps) {
           <div className="flex flex-col items-center gap-2">
             <TeamFlag teamName={match.awayTeam} size={52} />
             <p className="font-bold text-white">{awayName}</p>
-            {(phase === "finished" || phase === "live") && match.awayScore !== null && (
+            {showScores && (
               <p className="text-4xl font-black text-emerald-300">{match.awayScore}</p>
             )}
           </div>
         </div>
 
-        {phase === "upcoming" && (
+        {displayState === "upcoming" && (
           <div className="mt-4">
-            <MatchCountdown targetIso={match.kickoffAt.toISOString()} locale={locale} labels={countdownLabels} />
+            <MatchCountdown
+              targetIso={match.kickoffAt.toISOString()}
+              locale={locale}
+              labels={countdownLabels}
+            />
           </div>
         )}
 
-        {phase === "finished" && winnerLabel && (
+        {displayState === "live_or_needs_result" && (
+          <div className="mt-4 space-y-2 rounded-xl bg-amber-500/10 px-4 py-3 text-center">
+            <p className="text-sm font-medium text-amber-100">{t("liveStartedMessage")}</p>
+            <p className="text-xs text-amber-200/80">{t("awaitingResultVerification")}</p>
+            {user?.isAdmin && (
+              <Link
+                href={`/${locale}/admin/results?matchId=${match.id}`}
+                className="mt-2 inline-block rounded-lg bg-emerald-500 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-400"
+              >
+                {t("submitResult")}
+              </Link>
+            )}
+          </div>
+        )}
+
+        {isFinishedDisplay && winnerLabel && (
           <p className="mt-4 text-center text-sm text-white/70">
             {t("winner")}: <span className="font-bold text-emerald-300">{winnerLabel}</span>
           </p>
+        )}
+
+        {displayState === "finished_unverified" && (
+          <p className="mt-3 text-center text-xs text-amber-200">{t("awaitingSourceVerification")}</p>
         )}
 
         {isVerified && match.scoreSourceName && (
           <p className="mt-3 text-center text-xs text-white/50">
             {t("source")}:{" "}
             {match.scoreSourceUrl ? (
-              <a href={match.scoreSourceUrl} target="_blank" rel="noopener noreferrer" className="text-sky-300 hover:underline">
+              <a
+                href={match.scoreSourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sky-300 hover:underline"
+              >
                 {match.scoreSourceName}
               </a>
             ) : (
@@ -128,12 +188,19 @@ export default async function MatchCenterPage({ params }: PageProps) {
           </p>
         )}
 
-        <p className={`mt-3 text-center text-xs font-medium ${predictionOpen ? "text-emerald-300" : "text-amber-300"}`}>
-          {phase === "finished" ? t("predictionsClosed") : predictionOpen ? t("predictionsOpen") : t("predictionsClosed")}
+        <p
+          className={`mt-3 text-center text-xs font-medium ${
+            predictionOpen && displayState === "upcoming"
+              ? "text-emerald-300"
+              : "text-amber-300"
+          }`}
+        >
+          {displayState === "upcoming" && predictionOpen
+            ? t("predictionsOpen")
+            : t("predictionsClosed")}
         </p>
       </section>
 
-      {/* Crowd */}
       {crowd && crowd.total > 0 && (
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <h2 className="text-sm font-bold text-sky-300">{t("crowdPredictions")}</h2>
@@ -151,41 +218,56 @@ export default async function MatchCenterPage({ params }: PageProps) {
               <p className="text-xs text-white/50">{labels.away}</p>
             </div>
           </div>
-          {crowd.messageKey && (
+          {crowd.messageKey && isFinishedDisplay && (
             <p className="mt-3 text-center text-sm text-white/70">
-              {t(crowd.messageKey, { pct: crowd.crowdCorrect ? 100 - crowd.wrongPct : crowd.wrongPct })}
+              {t(crowd.messageKey, {
+                pct: crowd.crowdCorrect ? 100 - crowd.wrongPct : crowd.wrongPct,
+              })}
             </p>
           )}
         </section>
       )}
 
-      {/* AI Analysis */}
       <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
         <h2 className="text-sm font-bold text-emerald-300">🤖 {t("aiAnalysis")}</h2>
-        <p className="mt-2 text-center font-bold text-white">
-          {formatAiPredictionLine(match, locale, data.analysis.suggestedHomeScore, data.analysis.suggestedAwayScore)}
-        </p>
-        <p className="mt-1 text-center text-xs text-white/50">
-          {t("risk")}: {riskLabel}
-          {phase === "finished" && stats.total > 0 && (
-            <> · {t("exactCount", { count: stats.exactCount, total: stats.total })}</>
-          )}
-        </p>
-        {phase === "finished" && (
-          <p className="mt-1 text-center text-xs text-amber-200">{t("surprise")}: {surpriseLabel}</p>
-        )}
-        <ul className="mt-3 space-y-2 text-sm leading-7 text-white/70">
-          {reasoning.map((line, i) => (
-            <li key={i}>• {line}</li>
-          ))}
-        </ul>
-        {lessonLine && (
-          <div className="mt-3 rounded-xl bg-amber-400/10 px-3 py-2 text-sm text-amber-100">{lessonLine}</div>
-        )}
+        {displayState === "live_or_needs_result" ? (
+          <p className="mt-3 text-center text-sm leading-7 text-white/70">{t("aiPendingResult")}</p>
+        ) : analysis ? (
+          <>
+            <p className="mt-2 text-center font-bold text-white">
+              {formatAiPredictionLine(
+                match,
+                locale,
+                analysis.suggestedHomeScore,
+                analysis.suggestedAwayScore
+              )}
+            </p>
+            <p className="mt-1 text-center text-xs text-white/50">
+              {t("risk")}: {riskLabel}
+              {isFinishedDisplay && stats.total > 0 && (
+                <> · {t("exactCount", { count: stats.exactCount, total: stats.total })}</>
+              )}
+            </p>
+            {isFinishedDisplay && (
+              <p className="mt-1 text-center text-xs text-amber-200">
+                {t("surprise")}: {surpriseLabel}
+              </p>
+            )}
+            <ul className="mt-3 space-y-2 text-sm leading-7 text-white/70">
+              {reasoning.map((line, i) => (
+                <li key={i}>• {line}</li>
+              ))}
+            </ul>
+            {lessonLine && (
+              <div className="mt-3 rounded-xl bg-amber-400/10 px-3 py-2 text-sm text-amber-100">
+                {lessonLine}
+              </div>
+            )}
+          </>
+        ) : null}
       </section>
 
-      {/* Highlights */}
-      {(embedUrl || match.highlightsUrl) && (
+      {isFinishedDisplay && (embedUrl || match.highlightsUrl) && (
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <h2 className="text-sm font-bold text-amber-200">🎬 {t("officialHighlights")}</h2>
           {embedUrl && (
@@ -209,13 +291,9 @@ export default async function MatchCenterPage({ params }: PageProps) {
               {t("watchHighlights")} →
             </a>
           )}
-          {match.highlightsProvider && (
-            <p className="mt-2 text-center text-xs text-white/40">{match.highlightsProvider}</p>
-          )}
         </section>
       )}
 
-      {/* Goal clips from events */}
       {goalEvents.some((g) => g.sourceUrl) && (
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <h2 className="text-sm font-bold text-white">{t("goals")}</h2>
@@ -241,7 +319,6 @@ export default async function MatchCenterPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* Timeline */}
       {match.events.length > 0 && (
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <h2 className="text-sm font-bold text-white">{t("timeline")}</h2>
@@ -253,11 +330,6 @@ export default async function MatchCenterPage({ params }: PageProps) {
                   <p className="font-medium text-white">
                     {ev.minute != null ? `${ev.minute}'` : "—"} {eventDescription(ev, locale)}
                   </p>
-                  {ev.sourceUrl && (
-                    <a href={ev.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-300 hover:underline">
-                      {t("source")}
-                    </a>
-                  )}
                 </div>
               </li>
             ))}
@@ -265,7 +337,6 @@ export default async function MatchCenterPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* Top exact predictors */}
       {summary && summary.topExactPredictors.length > 0 && (
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <h2 className="text-sm font-bold text-white">{t("topExactPredictors")}</h2>
@@ -282,8 +353,7 @@ export default async function MatchCenterPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* Share */}
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <ShareButtons
           text={shareText}
           url={shareUrl}
@@ -293,6 +363,7 @@ export default async function MatchCenterPage({ params }: PageProps) {
             whatsapp: ts("whatsapp"),
             x: ts("x"),
             facebook: ts("facebook"),
+            copy: ts("copy"),
           }}
           analyticsSource="match_center"
         />
