@@ -40,3 +40,6 @@ next-env.d.ts
 
 # user uploads
 /public/uploads/
+
+# analytics logs (no DB)
+/data/

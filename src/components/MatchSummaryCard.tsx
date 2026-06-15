@@ -132,7 +132,7 @@ export function MatchSummaryCard({
       )}
 
       <div className="mt-6 border-t border-white/10 pt-5">
-        <ShareButtons text={shareText} url={shareUrl} labels={labels.share} />
+        <ShareButtons text={shareText} url={shareUrl} labels={labels.share} analyticsSource="match_summary" />
       </div>
     </div>
   );

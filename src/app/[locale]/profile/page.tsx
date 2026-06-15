@@ -164,6 +164,7 @@ export default async function ProfilePage({ params }: PageProps) {
           x: ts("x"),
           facebook: ts("facebook"),
         }}
+        analyticsSource="profile_referral"
       />
 
       <NotificationPrefsForm

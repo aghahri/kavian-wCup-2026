@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ReferralBanner } from "@/components/ReferralBanner";
+import { ShareButtons } from "@/components/ShareButtons";
 import { UserAvatar } from "@/components/UserAvatar";
 import { getCurrentUser } from "@/lib/auth";
 import { formatNumber } from "@/lib/format";
@@ -16,6 +17,7 @@ export default async function ReferralsPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("referrals");
+  const ts = await getTranslations("share");
 
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
@@ -41,6 +43,19 @@ export default async function ReferralsPage({ params }: PageProps) {
         description={t("yourLinkDesc")}
         copyLabel={t("copy")}
         copiedLabel={t("copied")}
+      />
+
+      <ShareButtons
+        text={t("shareText")}
+        url={referralUrl}
+        labels={{
+          share: ts("title"),
+          telegram: ts("telegram"),
+          whatsapp: ts("whatsapp"),
+          x: ts("x"),
+          facebook: ts("facebook"),
+        }}
+        analyticsSource="referrals"
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

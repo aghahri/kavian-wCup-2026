@@ -222,7 +222,9 @@
     "telegram": "تلگرام",
     "whatsapp": "واتساپ",
     "x": "ایکس",
-    "facebook": "فیسبوک"
+    "facebook": "فیسبوک",
+    "shokoofaloo": "شکوفه‌آلو",
+    "shokoofalooTooltip": "این لینک را در شکوفه‌آلو هم به اشتراک بگذار"
   },
   "login": {
     "title": "ورود",
@@ -491,7 +493,8 @@
     "verified": "تأییدشده",
     "inviteScore": "امتیاز دعوت",
     "leaderboard": "جدول دعوت‌کنندگان",
-    "backProfile": "پروفایل"
+    "backProfile": "پروفایل",
+    "shareText": "به کاویان فوتبال بپیوند — جام جهانی ۲۰۲۶ را با من پیش‌بینی کن!"
   },
   "secondChance": {
     "title": "جام جهانی دوم شانس",

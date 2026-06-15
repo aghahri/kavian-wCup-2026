@@ -222,7 +222,9 @@
     "telegram": "تيليجرام",
     "whatsapp": "واتساب",
     "x": "X",
-    "facebook": "فيسبوك"
+    "facebook": "فيسبوك",
+    "shokoofaloo": "شكوفالو",
+    "shokoofalooTooltip": "شارك هذا الرابط على شكوفالو أيضاً"
   },
   "login": {
     "title": "تسجيل الدخول",
@@ -491,7 +493,8 @@
     "verified": "مؤكد",
     "inviteScore": "نقاط الدعوة",
     "leaderboard": "جدول الداعين",
-    "backProfile": "الملف الشخصي"
+    "backProfile": "الملف الشخصي",
+    "shareText": "انضم إليّ في كافيان فوتبول — توقع كأس العالم ٢٠٢٦ معاً!"
   },
   "secondChance": {
     "title": "كأس العالم فرصة ثانية",

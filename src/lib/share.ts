@@ -1,3 +1,5 @@
+export const SHOKOOFALOO_URL = "https://shokoofaloo.com";
+
 export type SharePlatform = "telegram" | "whatsapp" | "x" | "facebook";
 
 export function buildShareUrls(text: string, url: string) {

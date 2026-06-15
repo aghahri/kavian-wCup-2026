@@ -222,7 +222,9 @@
     "telegram": "Telegram",
     "whatsapp": "WhatsApp",
     "x": "X",
-    "facebook": "Facebook"
+    "facebook": "Facebook",
+    "shokoofaloo": "Shokoofaloo",
+    "shokoofalooTooltip": "Share this link on Shokoofaloo too"
   },
   "login": {
     "title": "Login",
@@ -491,7 +493,8 @@
     "verified": "Verified",
     "inviteScore": "Invite score",
     "leaderboard": "Inviter leaderboard",
-    "backProfile": "Profile"
+    "backProfile": "Profile",
+    "shareText": "Join me on Kavian Football — predict the 2026 World Cup together!"
   },
   "secondChance": {
     "title": "Second Chance World Cup",

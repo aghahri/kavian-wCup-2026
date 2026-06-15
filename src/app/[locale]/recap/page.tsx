@@ -67,6 +67,7 @@ export default async function RecapPage({ params }: PageProps) {
           x: ts("x"),
           facebook: ts("facebook"),
         }}
+        analyticsSource="daily_recap"
       />
 
       <Link href={`/${locale}/predict`} className="block text-center text-emerald-300 hover:underline">

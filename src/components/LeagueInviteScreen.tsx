@@ -87,7 +87,7 @@ export function LeagueInviteScreen({
         </p>
       </div>
 
-      <ShareButtons text={shareText} url={inviteUrl} labels={labels.share} />
+      <ShareButtons text={shareText} url={inviteUrl} labels={labels.share} analyticsSource="league_invite" />
 
       <Link
         href={`/${locale}/leagues/${leagueCode}`}

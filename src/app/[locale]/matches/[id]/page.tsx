@@ -294,6 +294,7 @@ export default async function MatchCenterPage({ params }: PageProps) {
             x: ts("x"),
             facebook: ts("facebook"),
           }}
+          analyticsSource="match_center"
         />
       </section>
     </div>
