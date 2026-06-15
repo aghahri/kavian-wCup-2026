@@ -4,7 +4,9 @@ import { MatchCard } from "@/components/MatchCard";
 import { ShareButtons } from "@/components/ShareButtons";
 import { getSiteUrl } from "@/lib/share";
 import { getCurrentUser } from "@/lib/auth";
+import { MatchResultReminder } from "@/components/MatchResultReminder";
 import { getAwayTeamName, getHomeTeamName, getStageName } from "@/lib/match-i18n";
+import { deriveMatchState, needsResultReminder } from "@/lib/matches/match-state";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/routing";
 
@@ -28,8 +30,16 @@ export default async function FixturesPage({ params }: PageProps) {
     : [];
 
   const predictionMap = new Map(predictions.map((p) => [p.matchId, p]));
-  const upcoming = matches.filter((m) => !m.isFinished);
-  const finished = matches.filter((m) => m.isFinished);
+  const tc = await getTranslations("matchCenter");
+  const upcoming = matches.filter((m) => {
+    const s = deriveMatchState(m);
+    return s === "upcoming" || s === "live" || s === "needs_result";
+  });
+  const finished = matches.filter((m) => {
+    const s = deriveMatchState(m);
+    return s === "finished_unverified" || s === "finished_verified";
+  });
+  const staleMatch = matches.find((m) => needsResultReminder(m));
 
   return (
     <div className="space-y-8">
@@ -50,6 +60,10 @@ export default async function FixturesPage({ params }: PageProps) {
           }}
         />
       </div>
+
+      {staleMatch && (
+        <MatchResultReminder match={staleMatch} message={tc("resultNotRecordedYet")} />
+      )}
 
       <section>
         <h2 className="mb-4 text-lg font-bold text-emerald-300">{t("upcoming")}</h2>

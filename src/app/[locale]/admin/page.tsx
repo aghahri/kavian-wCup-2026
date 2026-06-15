@@ -33,6 +33,8 @@ export default async function AdminPage({ params }: PageProps) {
   ]);
 
   const cards = [
+    { href: `/${locale}/admin/live-ops`, title: t("liveOpsTitle"), desc: t("liveOpsSubtitle") },
+    { href: `/${locale}/admin/system-health`, title: t("systemHealthTitle"), desc: t("systemHealthSubtitle") },
     { href: `/${locale}/admin/ops`, title: t("opsTitle"), desc: t("opsSubtitle") },
     { href: `/${locale}/admin/matchday`, title: t("matchdayTitle"), desc: t("matchdaySubtitle") },
     { href: `/${locale}/admin/results`, title: t("resultsTitle"), desc: t("resultsSubtitle") },

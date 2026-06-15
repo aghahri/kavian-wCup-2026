@@ -3,8 +3,13 @@ import { getTranslations } from "next-intl/server";
 import { AppNav } from "@/components/AppNav";
 import { HeaderAuth } from "@/components/HeaderAuth";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { NavMoreMenu } from "@/components/NavMoreMenu";
 import { getCurrentUser } from "@/lib/auth";
-import { getCompactFooterNavItems, getNavItemsForSurface } from "@/lib/navigation";
+import {
+  getCompactFooterNavItems,
+  getHeaderMainNavItems,
+  getMoreDrawerNavItems,
+} from "@/lib/navigation";
 import type { Locale } from "@/i18n/routing";
 
 type HeaderProps = {
@@ -16,8 +21,9 @@ export async function Header({ locale }: HeaderProps) {
   const user = await getCurrentUser();
   const ctx = { isLoggedIn: Boolean(user), isAdmin: Boolean(user?.isAdmin) };
 
-  const desktopNav = getNavItemsForSurface("header", locale, ctx, (key) => t(key));
+  const desktopNav = getHeaderMainNavItems(locale, ctx, (key) => t(key));
   const mobileNav = getCompactFooterNavItems(locale, ctx, (key) => t(key));
+  const moreNav = getMoreDrawerNavItems(locale, ctx, (key) => t(key));
 
   const authLabels = {
     login: t("login"),
@@ -39,7 +45,10 @@ export async function Header({ locale }: HeaderProps) {
           </div>
         </Link>
 
-        <AppNav items={desktopNav} variant="header-desktop" />
+        <div className="hidden items-center gap-0.5 lg:flex">
+          <AppNav items={desktopNav} variant="header-desktop" />
+          <NavMoreMenu items={moreNav} moreLabel={t("more")} />
+        </div>
 
         <div className="flex shrink-0 items-center gap-2">
           <LanguageSwitcher locale={locale} />
@@ -47,7 +56,12 @@ export async function Header({ locale }: HeaderProps) {
         </div>
       </div>
 
-      <AppNav items={mobileNav} variant="header-mobile" />
+      <div className="flex items-center border-t border-white/5 lg:hidden">
+        <AppNav items={mobileNav} variant="header-mobile" />
+        <div className="shrink-0 px-2">
+          <NavMoreMenu items={moreNav} moreLabel={t("more")} />
+        </div>
+      </div>
     </header>
   );
 }

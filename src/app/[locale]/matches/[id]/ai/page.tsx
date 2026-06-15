@@ -10,7 +10,7 @@ import {
   RISK_LABELS,
   SURPRISE_LABELS,
 } from "@/lib/ai/football-analysis";
-import { getMatchStatus } from "@/lib/match-status";
+import { deriveMatchState, isStalePrematchAi } from "@/lib/matches/match-state";
 import { getAwayTeamName, getHomeTeamName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/routing";
@@ -24,11 +24,12 @@ export default async function MatchAiPage({ params }: PageProps) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("ai");
+  const tc = await getTranslations("matchCenter");
 
   const match = await prisma.match.findUnique({ where: { id } });
   if (!match) notFound();
 
-  const phase = getMatchStatus(match.kickoffAt, match.isFinished);
+  const state = deriveMatchState(match);
   const predictions = await prisma.prediction.findMany({
     where: { matchId: id },
     select: { homeScore: true, awayScore: true },
@@ -36,12 +37,25 @@ export default async function MatchAiPage({ params }: PageProps) {
   const stats = buildPredictionStats(predictions, match);
   const analysis = await getOrCreateMatchAnalysis(match);
 
+  if (!analysis || isStalePrematchAi(match)) {
+    return (
+      <div className="mx-auto max-w-lg space-y-6">
+        <Link href={`/${locale}/matches/${id}`} className="text-sm text-emerald-300 hover:underline">
+          ← {t("title")}
+        </Link>
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
+          <p className="text-sm leading-7 text-white/70">{tc("aiFinalAfterResult")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isFinished = state === "finished_unverified" || state === "finished_verified";
+  const isLive = state === "live" || state === "needs_result";
+
   const risk = RISK_LABELS[analysis.riskLevel as keyof typeof RISK_LABELS];
   const riskLabel = locale === "fa" ? risk.fa : locale === "ar" ? risk.ar : risk.en;
   const reasoning = getLocalizedReasoning(analysis, locale);
-  const isFinished = phase === "finished";
-  const isLive = phase === "live";
-
   const surpriseLevel = analysis.riskLevel === "high" && isFinished ? "high" : "low";
   const surprise = SURPRISE_LABELS[surpriseLevel as keyof typeof SURPRISE_LABELS];
   const surpriseLabel = locale === "fa" ? surprise.fa : locale === "ar" ? surprise.ar : surprise.en;

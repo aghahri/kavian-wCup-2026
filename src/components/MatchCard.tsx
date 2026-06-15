@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { MatchCountdown } from "@/components/MatchCountdown";
 import { MatchDisplayBadge } from "@/components/MatchDisplayBadge";
+import { MatchHighlightReminder } from "@/components/MatchHighlightReminder";
+import { MatchResultReminder } from "@/components/MatchResultReminder";
 import { TeamFlag } from "@/components/TeamFlag";
 import { formatDate, isPredictionOpen } from "@/lib/format";
 import { hasHighlights, highlightsWatchUrl } from "@/lib/highlights";
@@ -144,9 +146,11 @@ export async function MatchCard({
       )}
 
       {displayState === "live_or_needs_result" && (
-        <p className="mt-3 rounded-lg bg-amber-500/15 px-3 py-2 text-center text-xs text-amber-200">
-          {tc("scoreNotRecorded")}
-        </p>
+        <MatchResultReminder match={matchLike} message={tc("resultNotRecordedYet")} className="mt-3" />
+      )}
+
+      {isFinishedDisplay && (
+        <MatchHighlightReminder match={matchLike} message={tc("highlightsNotAddedYet")} className="mt-3" />
       )}
 
       {userPrediction && (

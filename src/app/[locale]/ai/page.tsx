@@ -13,7 +13,7 @@ import {
   buildPredictionStats,
 } from "@/lib/ai/football-analysis";
 import { hasHighlights, highlightsWatchUrl } from "@/lib/highlights";
-import { getMatchDisplayState } from "@/lib/match-status";
+import { deriveMatchState } from "@/lib/matches/match-state";
 import { getAwayTeamName, getHomeTeamName } from "@/lib/match-i18n";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/routing";
@@ -31,29 +31,33 @@ export default async function AiPulsePage({ params }: PageProps) {
 
   const allMatches = await prisma.match.findMany({ orderBy: { kickoffAt: "desc" } });
 
-  const upcoming = allMatches.filter((m) => getMatchDisplayState(m) === "upcoming");
+  const upcoming = allMatches.filter((m) => deriveMatchState(m) === "upcoming");
   const finished = allMatches.filter((m) => {
-    const s = getMatchDisplayState(m);
+    const s = deriveMatchState(m);
     return s === "finished_unverified" || s === "finished_verified";
   });
 
-  const upcomingAnalyses = await Promise.all(
-    upcoming.slice(0, 8).map(async (match) => ({
-      match,
-      analysis: await getOrCreateMatchAnalysis(match),
-    }))
-  );
+  const upcomingAnalyses = (
+    await Promise.all(
+      upcoming.slice(0, 8).map(async (match) => ({
+        match,
+        analysis: await getOrCreateMatchAnalysis(match),
+      }))
+    )
+  ).filter((row): row is { match: (typeof upcoming)[number]; analysis: NonNullable<Awaited<ReturnType<typeof getOrCreateMatchAnalysis>>> } => row.analysis !== null);
 
-  const finishedAnalyses = await Promise.all(
-    finished.slice(0, 8).map(async (match) => {
-      const predictions = await prisma.prediction.findMany({
-        where: { matchId: match.id },
-        select: { homeScore: true, awayScore: true },
-      });
-      const stats = buildPredictionStats(predictions, match);
-      return { match, analysis: await getOrCreateMatchAnalysis(match), stats };
-    })
-  );
+  const finishedAnalyses = (
+    await Promise.all(
+      finished.slice(0, 8).map(async (match) => {
+        const predictions = await prisma.prediction.findMany({
+          where: { matchId: match.id },
+          select: { homeScore: true, awayScore: true },
+        });
+        const stats = buildPredictionStats(predictions, match);
+        return { match, analysis: await getOrCreateMatchAnalysis(match), stats };
+      })
+    )
+  ).filter((row): row is typeof row & { analysis: NonNullable<typeof row.analysis> } => row.analysis !== null);
 
   const surprises = [...finishedAnalyses]
     .sort((a, b) => b.stats.wrongPct - a.stats.wrongPct)
@@ -194,7 +198,7 @@ function AiCard({
     kickoffAt: Date;
     isFinished: boolean;
   };
-  analysis: Awaited<ReturnType<typeof getOrCreateMatchAnalysis>>;
+  analysis: NonNullable<Awaited<ReturnType<typeof getOrCreateMatchAnalysis>>>;
   locale: Locale;
   t: (key: string, values?: Record<string, string | number>) => string;
   tc: (key: string) => string;

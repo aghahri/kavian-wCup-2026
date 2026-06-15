@@ -1,11 +1,8 @@
-import {
-  getMatchDisplayState,
-  isWithinLiveWindow,
-  type MatchLike,
-} from "@/lib/match-status";
+import { getMatchDisplayState, isWithinLiveWindow } from "@/lib/match-status";
+import { deriveMatchState } from "@/lib/matches/match-state";
 
 type MatchDisplayBadgeProps = {
-  match: MatchLike;
+  match: Parameters<typeof getMatchDisplayState>[0];
   labels: {
     upcoming: string;
     live: string;
@@ -28,7 +25,8 @@ export function MatchDisplayBadge({ match, labels }: MatchDisplayBadgeProps) {
   }
 
   if (state === "live_or_needs_result") {
-    const live = isWithinLiveWindow(match.kickoffAt);
+    const derived = deriveMatchState(match);
+    const live = derived === "live" || isWithinLiveWindow(match.kickoffAt);
     return (
       <span
         className={`rounded-full px-2.5 py-1 text-xs font-semibold ${

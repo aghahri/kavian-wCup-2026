@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { MatchCountdown } from "@/components/MatchCountdown";
 import { MatchDisplayBadge } from "@/components/MatchDisplayBadge";
+import { MatchHighlightReminder } from "@/components/MatchHighlightReminder";
+import { MatchResultReminder } from "@/components/MatchResultReminder";
 import { ShareButtons } from "@/components/ShareButtons";
 import { TeamFlag } from "@/components/TeamFlag";
 import { formatAiPredictionLine } from "@/lib/ai/football-analysis";
@@ -146,17 +148,20 @@ export default async function MatchCenterPage({ params }: PageProps) {
         )}
 
         {displayState === "live_or_needs_result" && (
-          <div className="mt-4 space-y-2 rounded-xl bg-amber-500/10 px-4 py-3 text-center">
-            <p className="text-sm font-medium text-amber-100">{t("liveStartedMessage")}</p>
-            <p className="text-xs text-amber-200/80">{t("awaitingResultVerification")}</p>
-            {user?.isAdmin && (
-              <Link
-                href={`/${locale}/admin/results?matchId=${match.id}`}
-                className="mt-2 inline-block rounded-lg bg-emerald-500 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-400"
-              >
-                {t("submitResult")}
-              </Link>
-            )}
+          <div className="mt-4 space-y-2">
+            <MatchResultReminder match={match} message={t("resultNotRecordedYet")} />
+            <div className="rounded-xl bg-amber-500/10 px-4 py-3 text-center">
+              <p className="text-sm font-medium text-amber-100">{t("liveStartedMessage")}</p>
+              <p className="text-xs text-amber-200/80">{t("awaitingResultVerification")}</p>
+              {user?.isAdmin && (
+                <Link
+                  href={`/${locale}/admin/results?matchId=${match.id}`}
+                  className="mt-2 inline-block rounded-lg bg-emerald-500 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-400"
+                >
+                  {t("submitResult")}
+                </Link>
+              )}
+            </div>
           </div>
         )}
 
@@ -231,7 +236,7 @@ export default async function MatchCenterPage({ params }: PageProps) {
       <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
         <h2 className="text-sm font-bold text-emerald-300">🤖 {t("aiAnalysis")}</h2>
         {displayState === "live_or_needs_result" ? (
-          <p className="mt-3 text-center text-sm leading-7 text-white/70">{t("aiPendingResult")}</p>
+          <p className="mt-3 text-center text-sm leading-7 text-white/70">{t("aiFinalAfterResult")}</p>
         ) : analysis ? (
           <>
             <p className="mt-2 text-center font-bold text-white">
@@ -266,6 +271,10 @@ export default async function MatchCenterPage({ params }: PageProps) {
           </>
         ) : null}
       </section>
+
+      {isFinishedDisplay && (
+        <MatchHighlightReminder match={match} message={t("highlightsNotAddedYet")} className="mt-2" />
+      )}
 
       {isFinishedDisplay && (embedUrl || match.highlightsUrl) && (
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">

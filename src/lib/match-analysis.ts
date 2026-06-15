@@ -5,6 +5,7 @@ import {
 } from "@/lib/ai/football-analysis";
 import { getCrowdForMatch } from "@/lib/crowd-predictions";
 import { getMatchDisplayState } from "@/lib/match-status";
+import { isStalePrematchAi } from "@/lib/matches/match-state";
 import type { Match } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -54,9 +55,8 @@ export async function regenerateMatchAnalysis(match: Match) {
 export async function getOrCreateMatchAnalysis(match: Match) {
   const displayState = getMatchDisplayState(match);
 
-  if (displayState === "live_or_needs_result") {
-    const existing = await prisma.matchAnalysis.findUnique({ where: { matchId: match.id } });
-    return existing ?? regenerateMatchAnalysis(match);
+  if (isStalePrematchAi(match)) {
+    return null;
   }
 
   if (displayState === "finished_unverified" || displayState === "finished_verified") {

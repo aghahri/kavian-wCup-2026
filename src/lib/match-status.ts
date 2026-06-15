@@ -1,4 +1,12 @@
-const LIVE_DURATION_MS = 2 * 60 * 60 * 1000;
+import {
+  deriveMatchState,
+  isKickedOff as stateIsKickedOff,
+  isWithinLiveWindow as stateIsWithinLiveWindow,
+  LIVE_DURATION_MS,
+  type MatchStateInput,
+} from "@/lib/matches/match-state";
+
+export { LIVE_DURATION_MS };
 
 export type MatchStatus = "upcoming" | "live" | "finished";
 
@@ -8,26 +16,18 @@ export type MatchDisplayState =
   | "finished_unverified"
   | "finished_verified";
 
-export type MatchLike = {
-  kickoffAt: Date;
-  isFinished: boolean;
-  homeScore: number | null;
-  awayScore: number | null;
-  scoreVerifiedAt?: Date | null;
-};
+export type MatchLike = MatchStateInput;
 
 export function hasMatchScore(match: Pick<MatchLike, "homeScore" | "awayScore">): boolean {
   return match.homeScore !== null && match.awayScore !== null;
 }
 
 export function isKickedOff(kickoffAt: Date): boolean {
-  return Date.now() >= kickoffAt.getTime();
+  return stateIsKickedOff(kickoffAt);
 }
 
 export function isWithinLiveWindow(kickoffAt: Date): boolean {
-  const kickoff = kickoffAt.getTime();
-  const now = Date.now();
-  return now >= kickoff && now < kickoff + LIVE_DURATION_MS;
+  return stateIsWithinLiveWindow(kickoffAt);
 }
 
 /** Legacy tri-state used across lists and AI pipelines. */
@@ -37,17 +37,17 @@ export function getMatchStatus(
   homeScore: number | null = null,
   awayScore: number | null = null
 ): MatchStatus {
-  if (isFinished && hasMatchScore({ homeScore, awayScore })) return "finished";
-  if (isKickedOff(kickoffAt)) return "live";
+  const state = deriveMatchState({ kickoffAt, isFinished, homeScore, awayScore });
+  if (state === "finished_unverified" || state === "finished_verified") return "finished";
+  if (state === "live" || state === "needs_result") return "live";
   return "upcoming";
 }
 
-/** Rich UI state for match center and cards. */
+/** Rich UI state for match center and cards — bridges to deriveMatchState. */
 export function getMatchDisplayState(match: MatchLike): MatchDisplayState {
-  if (!isKickedOff(match.kickoffAt)) return "upcoming";
-  if (!hasMatchScore(match) || !match.isFinished) return "live_or_needs_result";
-  if (match.scoreVerifiedAt) return "finished_verified";
-  return "finished_unverified";
+  const state = deriveMatchState(match);
+  if (state === "live" || state === "needs_result") return "live_or_needs_result";
+  return state;
 }
 
 export function getCountdownParts(target: Date): {

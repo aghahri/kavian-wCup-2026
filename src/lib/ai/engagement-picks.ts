@@ -1,7 +1,7 @@
 import type { Match } from "@prisma/client";
 import { getOrCreateMatchAnalysis } from "@/lib/match-analysis";
 import { RISK_LABELS } from "@/lib/ai/football-analysis";
-import { getMatchStatus } from "@/lib/match-status";
+import { deriveMatchState } from "@/lib/matches/match-state";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/routing";
 
@@ -28,15 +28,19 @@ export async function buildEngagementPicks(locale: Locale) {
     take: 12,
   });
 
-  const upcoming = matches.filter((m) => getMatchStatus(m.kickoffAt, m.isFinished) === "upcoming");
+  const upcoming = matches.filter((m) => deriveMatchState(m) === "upcoming");
   if (upcoming.length === 0) return null;
 
-  const analyzed = await Promise.all(
-    upcoming.map(async (match) => ({
-      match,
-      analysis: await getOrCreateMatchAnalysis(match),
-    }))
-  );
+  const analyzed = (
+    await Promise.all(
+      upcoming.map(async (match) => ({
+        match,
+        analysis: await getOrCreateMatchAnalysis(match),
+      }))
+    )
+  ).filter((row): row is { match: Match; analysis: NonNullable<typeof row.analysis> } => row.analysis !== null);
+
+  if (analyzed.length === 0) return null;
 
   const pickOfDay = analyzed[0];
   const upsetRisk = [...analyzed].sort((a, b) => {
