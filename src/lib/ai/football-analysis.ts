@@ -12,6 +12,11 @@ export type PredictionStats = {
   correctResultCount: number;
   wrongCount: number;
   wrongPct: number;
+  crowdMajorityCorrect?: boolean | null;
+  crowdHomePct?: number;
+  crowdDrawPct?: number;
+  crowdAwayPct?: number;
+  topExactNames?: string[];
 };
 
 export type FootballAnalysis = {
@@ -162,6 +167,24 @@ function generateFinishedAnalysis(match: Match, stats: PredictionStats): Footbal
     `${stats.exactCount} exact predictions out of ${stats.total}.`,
     `${stats.wrongPct}% of users predicted the wrong outcome.`,
   ];
+
+  if (stats.crowdMajorityCorrect !== undefined && stats.crowdMajorityCorrect !== null) {
+    reasoning.push(
+      stats.crowdMajorityCorrect
+        ? `اکثریت کاربران (${stats.crowdHomePct ?? 0}٪ / ${stats.crowdDrawPct ?? 0}٪ / ${stats.crowdAwayPct ?? 0}٪) درست پیش‌بینی کردند.`
+        : "اکثریت کاربران اشتباه فکر می‌کردند."
+    );
+    reasoningEn.push(
+      stats.crowdMajorityCorrect
+        ? "The crowd majority got the result right."
+        : "The crowd majority got it wrong."
+    );
+  }
+
+  if (stats.topExactNames && stats.topExactNames.length > 0) {
+    reasoning.push(`بهترین پیش‌بینی‌های دقیق: ${stats.topExactNames.slice(0, 3).join("، ")}`);
+    reasoningEn.push(`Top exact predictors: ${stats.topExactNames.slice(0, 3).join(", ")}`);
+  }
 
   const lesson =
     surpriseLevel === "high"

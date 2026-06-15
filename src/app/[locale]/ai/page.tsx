@@ -75,7 +75,7 @@ export default async function AiPulsePage({ params }: PageProps) {
           ].map(({ key, pick, label, icon }) => (
             <Link
               key={key}
-              href={`/${locale}/matches/${pick.match.id}/ai`}
+              href={`/${locale}/matches/${pick.match.id}`}
               className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-emerald-500/40"
             >
               <p className="text-xs font-semibold text-emerald-300">
@@ -148,7 +148,7 @@ export default async function AiPulsePage({ params }: PageProps) {
             {surprises.map(({ match, stats }) => (
               <Link
                 key={match.id}
-                href={`/${locale}/matches/${match.id}/summary`}
+                href={`/${locale}/matches/${match.id}`}
                 className="block rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 hover:border-amber-400/40"
               >
                 <p className="font-bold text-white">
@@ -214,7 +214,7 @@ function AiCard({
         ))}
       </ul>
       <Link
-        href={`/${locale}/matches/${match.id}/ai`}
+        href={`/${locale}/matches/${match.id}`}
         className="mt-4 block text-center text-sm text-emerald-300 hover:underline"
       >
         {t("viewDetail")} →

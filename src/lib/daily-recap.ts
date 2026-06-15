@@ -90,6 +90,11 @@ async function generateRecap(locale: Locale): Promise<RecapData> {
   };
 }
 
+export async function invalidateDailyRecap(): Promise<void> {
+  const date = todayDateKey();
+  await prisma.dailyRecap.deleteMany({ where: { recapDate: date } });
+}
+
 export async function getOrGenerateDailyRecap(locale: Locale): Promise<RecapData> {
   const date = todayDateKey();
   const cached = await prisma.dailyRecap.findUnique({ where: { recapDate: date } });

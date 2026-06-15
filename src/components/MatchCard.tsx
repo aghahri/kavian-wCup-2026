@@ -22,6 +22,10 @@ type MatchCardProps = {
   userPrediction?: { homeScore: number; awayScore: number; points: number } | null;
   showPredictLink?: boolean;
   featured?: boolean;
+  scoreVerifiedAt?: Date | null;
+  highlightsUrl?: string | null;
+  highlightsEmbedUrl?: string | null;
+  aiRefreshedAt?: Date | null;
 };
 
 export async function MatchCard({
@@ -39,11 +43,20 @@ export async function MatchCard({
   userPrediction,
   showPredictLink = false,
   featured = false,
+  scoreVerifiedAt,
+  highlightsUrl,
+  highlightsEmbedUrl,
+  aiRefreshedAt,
 }: MatchCardProps) {
   const t = await getTranslations({ locale, namespace: "match" });
+  const tc = await getTranslations({ locale, namespace: "matchCenter" });
   const tp = await getTranslations({ locale, namespace: "predict" });
   const open = isPredictionOpen(kickoffAt, isFinished);
   const status = getMatchStatus(kickoffAt, isFinished);
+
+  const isVerified = Boolean(scoreVerifiedAt);
+  const hasHighlights = Boolean(highlightsUrl || highlightsEmbedUrl);
+  const aiUpdated = Boolean(aiRefreshedAt);
 
   const statusLabels = {
     upcoming: t("statusUpcoming"),
@@ -65,33 +78,44 @@ export async function MatchCard({
         featured ? "border-emerald-500/40 ring-1 ring-emerald-500/20" : "border-white/10"
       } ${status === "live" ? "border-red-500/30" : ""}`}
     >
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-200">
-            {stage}
-          </span>
-          <MatchStatusBadge kickoffAt={kickoffAt} isFinished={isFinished} labels={statusLabels} />
+      <Link href={`/${locale}/matches/${id}`} className="block">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-200">
+              {stage}
+            </span>
+            <MatchStatusBadge kickoffAt={kickoffAt} isFinished={isFinished} labels={statusLabels} />
+            {isFinished && isVerified && (
+              <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-200">✓</span>
+            )}
+            {isFinished && hasHighlights && (
+              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-200">🎬</span>
+            )}
+            {isFinished && aiUpdated && (
+              <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs text-violet-200">🤖</span>
+            )}
+          </div>
+          <span className="text-xs text-white/60">{formatDate(kickoffAt, locale)}</span>
         </div>
-        <span className="text-xs text-white/60">{formatDate(kickoffAt, locale)}</span>
-      </div>
 
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
-        <div className="flex flex-col items-center gap-2">
-          <TeamFlag teamName={homeTeam} size={featured ? 40 : 32} />
-          <p className="text-base font-bold text-white">{homeTeamFa}</p>
-          {isFinished && homeScore !== null && (
-            <p className="text-2xl font-black text-emerald-300">{homeScore}</p>
-          )}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <TeamFlag teamName={homeTeam} size={featured ? 40 : 32} />
+            <p className="text-base font-bold text-white">{homeTeamFa}</p>
+            {isFinished && homeScore !== null && (
+              <p className="text-2xl font-black text-emerald-300">{homeScore}</p>
+            )}
+          </div>
+          <div className="text-sm font-bold text-white/50">{t("vs")}</div>
+          <div className="flex flex-col items-center gap-2">
+            <TeamFlag teamName={awayTeam} size={featured ? 40 : 32} />
+            <p className="text-base font-bold text-white">{awayTeamFa}</p>
+            {isFinished && awayScore !== null && (
+              <p className="text-2xl font-black text-emerald-300">{awayScore}</p>
+            )}
+          </div>
         </div>
-        <div className="text-sm font-bold text-white/50">{t("vs")}</div>
-        <div className="flex flex-col items-center gap-2">
-          <TeamFlag teamName={awayTeam} size={featured ? 40 : 32} />
-          <p className="text-base font-bold text-white">{awayTeamFa}</p>
-          {isFinished && awayScore !== null && (
-            <p className="text-2xl font-black text-emerald-300">{awayScore}</p>
-          )}
-        </div>
-      </div>
+      </Link>
 
       {status === "upcoming" && (
         <div className="mt-4">
@@ -126,14 +150,22 @@ export async function MatchCard({
         >
           {isFinished ? t("finished") : open ? t("open") : t("closed")}
         </span>
-        {showPredictLink && open && (
+        <div className="flex gap-2">
           <Link
-            href={`/${locale}/predict?match=${id}`}
-            className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-medium text-white transition hover:bg-emerald-400"
+            href={`/${locale}/matches/${id}`}
+            className="rounded-lg border border-white/20 px-3 py-2 text-xs font-medium text-white/80 hover:bg-white/10"
           >
-            {t("predict")}
+            {tc("viewMatch")}
           </Link>
-        )}
+          {showPredictLink && open && (
+            <Link
+              href={`/${locale}/predict?match=${id}`}
+              className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-medium text-white transition hover:bg-emerald-400"
+            >
+              {t("predict")}
+            </Link>
+          )}
+        </div>
       </div>
     </article>
   );

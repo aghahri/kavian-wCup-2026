@@ -3,6 +3,7 @@ import {
   buildPredictionStats,
   generateFootballAnalysis,
 } from "@/lib/ai/football-analysis";
+import { getCrowdForMatch } from "@/lib/crowd-predictions";
 import { getMatchStatus } from "@/lib/match-status";
 import type { Match } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -10,9 +11,32 @@ import { prisma } from "@/lib/prisma";
 async function fetchPredictionStats(match: Match) {
   const predictions = await prisma.prediction.findMany({
     where: { matchId: match.id },
-    select: { homeScore: true, awayScore: true },
+    select: { homeScore: true, awayScore: true, user: { select: { name: true } } },
   });
-  return buildPredictionStats(predictions, match);
+  const base = buildPredictionStats(
+    predictions.map((p) => ({ homeScore: p.homeScore, awayScore: p.awayScore })),
+    match
+  );
+
+  const crowd = await getCrowdForMatch(match);
+  const topExactNames = predictions
+    .filter(
+      (p) =>
+        match.homeScore !== null &&
+        match.awayScore !== null &&
+        p.homeScore === match.homeScore &&
+        p.awayScore === match.awayScore
+    )
+    .map((p) => p.user.name);
+
+  return {
+    ...base,
+    crowdMajorityCorrect: crowd?.crowdCorrect ?? null,
+    crowdHomePct: crowd?.homePct,
+    crowdDrawPct: crowd?.drawPct,
+    crowdAwayPct: crowd?.awayPct,
+    topExactNames,
+  };
 }
 
 export async function regenerateMatchAnalysis(match: Match) {

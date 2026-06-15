@@ -31,7 +31,7 @@ export default async function MatchSummaryPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
-      <Link href={`/${locale}/fixtures`} className="text-sm text-emerald-300 hover:underline">
+      <Link href={`/${locale}/matches/${id}`} className="text-sm text-emerald-300 hover:underline">
         ← {t("back")}
       </Link>
       <MatchSummaryCard

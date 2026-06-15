@@ -31,6 +31,14 @@ export async function PATCH(request: Request, context: RouteContext) {
       awayScore?: number | null;
       isFinished?: boolean;
       predictionLockOverride?: string | null;
+      scoreSourceName?: string | null;
+      scoreSourceUrl?: string | null;
+      scoreVerifiedAt?: Date | null;
+      externalMatchId?: string | null;
+      highlightsUrl?: string | null;
+      highlightsProvider?: string | null;
+      highlightsEmbedUrl?: string | null;
+      markVerified?: boolean;
     } = {};
 
     if (body.homeTeam !== undefined) data.homeTeam = String(body.homeTeam).trim();
@@ -50,6 +58,29 @@ export async function PATCH(request: Request, context: RouteContext) {
       const v = body.predictionLockOverride;
       data.predictionLockOverride =
         v === null || v === "" ? null : v === "open" || v === "closed" ? v : null;
+    }
+    if (body.scoreSourceName !== undefined) {
+      data.scoreSourceName = body.scoreSourceName ? String(body.scoreSourceName).trim() : null;
+    }
+    if (body.scoreSourceUrl !== undefined) {
+      data.scoreSourceUrl = body.scoreSourceUrl ? String(body.scoreSourceUrl).trim() : null;
+    }
+    if (body.externalMatchId !== undefined) {
+      data.externalMatchId = body.externalMatchId ? String(body.externalMatchId).trim() : null;
+    }
+    if (body.highlightsUrl !== undefined) {
+      data.highlightsUrl = body.highlightsUrl ? String(body.highlightsUrl).trim() : null;
+    }
+    if (body.highlightsProvider !== undefined) {
+      data.highlightsProvider = body.highlightsProvider ? String(body.highlightsProvider).trim() : null;
+    }
+    if (body.highlightsEmbedUrl !== undefined) {
+      data.highlightsEmbedUrl = body.highlightsEmbedUrl ? String(body.highlightsEmbedUrl).trim() : null;
+    }
+    if (body.markVerified === true) {
+      data.scoreVerifiedAt = new Date();
+    } else if (body.scoreVerifiedAt === null) {
+      data.scoreVerifiedAt = null;
     }
 
     const match = await prisma.match.update({ where: { id }, data });

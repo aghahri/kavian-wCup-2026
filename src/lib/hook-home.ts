@@ -21,6 +21,7 @@ export async function getHomeHookData(locale: Locale, user: User | null) {
     recap,
     topPlayers,
     banners,
+    recentFinished,
   ] = await Promise.all([
     prisma.match.findFirst({
       where: { isFinished: false },
@@ -32,6 +33,11 @@ export async function getHomeHookData(locale: Locale, user: User | null) {
     getOrGenerateDailyRecap(locale),
     buildLeaderboard({ period: "global", limit: 5 }),
     getGrowthBanners(user, locale),
+    prisma.match.findMany({
+      where: { isFinished: true },
+      orderBy: { kickoffAt: "desc" },
+      take: 4,
+    }),
   ]);
 
   let footballIq = null;
@@ -75,5 +81,6 @@ export async function getHomeHookData(locale: Locale, user: User | null) {
     missions,
     myLeagues,
     userLevel,
+    recentFinished,
   };
 }

@@ -1,6 +1,7 @@
 import { regenerateMatchAnalysis } from "@/lib/match-analysis";
 import { applyFootballIqForMatch } from "@/lib/football-iq";
 import { refreshTrashTalkForMatch } from "@/lib/league-trash-talk";
+import { invalidateDailyRecap } from "@/lib/daily-recap";
 import { syncUserBadges } from "@/lib/badges";
 import { scoreDailyChallengeForMatch } from "@/lib/daily-challenge";
 import { prisma } from "@/lib/prisma";
@@ -49,6 +50,23 @@ export async function refreshMatchAfterScoreUpdate(matchId: string): Promise<voi
   await applyFootballIqForMatch(matchId, risk);
   await refreshTrashTalkForMatch(matchId);
   await scoreDailyChallengeForMatch(matchId);
+
+  await prisma.match.update({
+    where: { id: matchId },
+    data: { aiRefreshedAt: new Date() },
+  });
+
+  if (match.isFinished) {
+    const today = new Date();
+    const kickoff = match.kickoffAt;
+    const sameDay =
+      kickoff.getUTCFullYear() === today.getUTCFullYear() &&
+      kickoff.getUTCMonth() === today.getUTCMonth() &&
+      kickoff.getUTCDate() === today.getUTCDate();
+    if (sameDay) {
+      await invalidateDailyRecap();
+    }
+  }
 
   const uniqueUsers = [...new Set(affectedUserIds)];
   await Promise.all(uniqueUsers.map((userId) => syncUserBadges(userId)));

@@ -51,7 +51,7 @@ export default async function MatchAiPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
-      <Link href={`/${locale}/ai`} className="text-sm text-emerald-300 hover:underline">
+      <Link href={`/${locale}/matches/${id}`} className="text-sm text-emerald-300 hover:underline">
         ← {t("title")}
       </Link>
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6">

@@ -2,7 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
+import { AdminMatchEvents } from "@/components/AdminMatchEvents";
 import { getAllTeams, getTeamLocalizedSlot } from "@/lib/teams";
+
+type MatchEventRow = {
+  id: string;
+  minute: number | null;
+  type: string;
+  teamName: string | null;
+  playerName: string | null;
+  descriptionFa: string | null;
+};
 
 type AdminMatch = {
   id: string;
@@ -17,6 +27,14 @@ type AdminMatch = {
   homeScore: number | null;
   awayScore: number | null;
   isFinished: boolean;
+  scoreSourceName?: string | null;
+  scoreSourceUrl?: string | null;
+  scoreVerifiedAt?: string | Date | null;
+  externalMatchId?: string | null;
+  highlightsUrl?: string | null;
+  highlightsProvider?: string | null;
+  highlightsEmbedUrl?: string | null;
+  events?: MatchEventRow[];
   _count: { predictions: number };
 };
 
@@ -118,7 +136,11 @@ export function AdminMatchManager({ initialMatches }: AdminMatchManagerProps) {
 
   async function updateMatch(
     id: string,
-    patch: Partial<AdminMatch> & { homeScore?: number | null; awayScore?: number | null }
+    patch: Partial<AdminMatch> & {
+      homeScore?: number | null;
+      awayScore?: number | null;
+      markVerified?: boolean;
+    }
   ) {
     setError("");
     const response = await fetch(`/api/admin/matches/${id}`, {
@@ -268,7 +290,11 @@ function MatchEditor({
   match: AdminMatch;
   onUpdate: (
     id: string,
-    patch: Partial<AdminMatch> & { homeScore?: number | null; awayScore?: number | null }
+    patch: Partial<AdminMatch> & {
+      homeScore?: number | null;
+      awayScore?: number | null;
+      markVerified?: boolean;
+    }
   ) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
@@ -283,6 +309,13 @@ function MatchEditor({
   const [homeScore, setHomeScore] = useState(match.homeScore ?? 0);
   const [awayScore, setAwayScore] = useState(match.awayScore ?? 0);
   const [isFinished, setIsFinished] = useState(match.isFinished);
+  const [scoreSourceName, setScoreSourceName] = useState(match.scoreSourceName ?? "");
+  const [scoreSourceUrl, setScoreSourceUrl] = useState(match.scoreSourceUrl ?? "");
+  const [externalMatchId, setExternalMatchId] = useState(match.externalMatchId ?? "");
+  const [highlightsUrl, setHighlightsUrl] = useState(match.highlightsUrl ?? "");
+  const [highlightsProvider, setHighlightsProvider] = useState(match.highlightsProvider ?? "");
+  const [highlightsEmbedUrl, setHighlightsEmbedUrl] = useState(match.highlightsEmbedUrl ?? "");
+  const isVerified = Boolean(match.scoreVerifiedAt);
 
   const title = useMemo(
     () => `${homeTeamFa || match.homeTeamFa} - ${awayTeamFa || match.awayTeamFa}`,
@@ -381,8 +414,55 @@ function MatchEditor({
             />
             بازی تمام شد
           </label>
+          {isVerified && (
+            <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-200">✓ تأیید شده</span>
+          )}
         </div>
       </div>
+
+      <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3">
+        <p className="mb-2 text-sm font-medium text-white/80">منبع نتیجه و خلاصه</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input
+            placeholder="نام منبع (مثلاً FIFA)"
+            value={scoreSourceName}
+            onChange={(e) => setScoreSourceName(e.target.value)}
+            className="rounded-lg border border-white/20 bg-black/30 px-2 py-1.5 text-xs text-white"
+          />
+          <input
+            placeholder="لینک منبع نتیجه"
+            value={scoreSourceUrl}
+            onChange={(e) => setScoreSourceUrl(e.target.value)}
+            className="rounded-lg border border-white/20 bg-black/30 px-2 py-1.5 text-xs text-white"
+          />
+          <input
+            placeholder="External Match ID"
+            value={externalMatchId}
+            onChange={(e) => setExternalMatchId(e.target.value)}
+            className="rounded-lg border border-white/20 bg-black/30 px-2 py-1.5 text-xs text-white"
+          />
+          <input
+            placeholder="ارائه‌دهنده خلاصه"
+            value={highlightsProvider}
+            onChange={(e) => setHighlightsProvider(e.target.value)}
+            className="rounded-lg border border-white/20 bg-black/30 px-2 py-1.5 text-xs text-white"
+          />
+          <input
+            placeholder="لینک خلاصه (YouTube/FIFA)"
+            value={highlightsUrl}
+            onChange={(e) => setHighlightsUrl(e.target.value)}
+            className="rounded-lg border border-white/20 bg-black/30 px-2 py-1.5 text-xs text-white sm:col-span-2"
+          />
+          <input
+            placeholder="Embed URL (YouTube iframe)"
+            value={highlightsEmbedUrl}
+            onChange={(e) => setHighlightsEmbedUrl(e.target.value)}
+            className="rounded-lg border border-white/20 bg-black/30 px-2 py-1.5 text-xs text-white sm:col-span-2"
+          />
+        </div>
+      </div>
+
+      <AdminMatchEvents matchId={match.id} initialEvents={match.events ?? []} />
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button
@@ -400,12 +480,36 @@ function MatchEditor({
               homeScore,
               awayScore,
               isFinished,
+              scoreSourceName: scoreSourceName || null,
+              scoreSourceUrl: scoreSourceUrl || null,
+              externalMatchId: externalMatchId || null,
+              highlightsUrl: highlightsUrl || null,
+              highlightsProvider: highlightsProvider || null,
+              highlightsEmbedUrl: highlightsEmbedUrl || null,
             })
           }
           className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-400"
         >
           ذخیره تغییرات
         </button>
+        {isFinished && !isVerified && (
+          <button
+            type="button"
+            onClick={() =>
+              onUpdate(match.id, {
+                homeScore,
+                awayScore,
+                isFinished: true,
+                scoreSourceName: scoreSourceName || null,
+                scoreSourceUrl: scoreSourceUrl || null,
+                markVerified: true,
+              })
+            }
+            className="rounded-lg bg-sky-600 px-3 py-2 text-xs font-bold text-white hover:bg-sky-500"
+          >
+            تأیید نتیجه
+          </button>
+        )}
         <button
           type="button"
           onClick={() => onDelete(match.id)}

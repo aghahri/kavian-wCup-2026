@@ -21,7 +21,20 @@ export default async function AdminMatchesPage({ params }: PageProps) {
 
   const matches = await prisma.match.findMany({
     orderBy: { kickoffAt: "asc" },
-    include: { _count: { select: { predictions: true } } },
+    include: {
+      _count: { select: { predictions: true } },
+      events: {
+        orderBy: [{ minute: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          minute: true,
+          type: true,
+          teamName: true,
+          playerName: true,
+          descriptionFa: true,
+        },
+      },
+    },
   });
 
   return (

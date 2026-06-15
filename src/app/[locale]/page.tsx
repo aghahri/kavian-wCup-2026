@@ -120,7 +120,7 @@ export default async function HomePage({ params }: PageProps) {
 
       {/* 5. AI pick */}
       {hook.engagement?.pickOfDay && (
-        <Link href={`/${locale}/matches/${hook.engagement.pickOfDay.match.id}/ai`} className="block rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+        <Link href={`/${locale}/matches/${hook.engagement.pickOfDay.match.id}`} className="block rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
           <p className="text-xs font-semibold text-emerald-300">⭐ {t("aiPick")}</p>
           <p className="mt-1 font-bold text-white">
             {formatAiPredictionLine(
@@ -152,6 +152,38 @@ export default async function HomePage({ params }: PageProps) {
         <p className="text-xs font-semibold text-amber-200">{t("dailyRecap")}</p>
         <p className="mt-2 text-sm text-white/70 line-clamp-2">{hook.recap.funFact}</p>
       </Link>
+
+      {/* Finished matches & highlights */}
+      {hook.recentFinished.length > 0 && (
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-white">{t("finishedHighlights")}</h2>
+            <Link href={`/${locale}/fixtures`} className="text-xs text-emerald-300">{t("allFixtures")}</Link>
+          </div>
+          <div className="space-y-2">
+            {hook.recentFinished.map((m) => (
+              <Link
+                key={m.id}
+                href={`/${locale}/matches/${m.id}`}
+                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-emerald-500/30"
+              >
+                <div className="flex items-center gap-3">
+                  <TeamFlag teamName={m.homeTeam} size={28} />
+                  <span className="text-sm font-bold text-white">
+                    {getHomeTeamName(m, locale)} {m.homeScore ?? 0}-{m.awayScore ?? 0} {getAwayTeamName(m, locale)}
+                  </span>
+                  <TeamFlag teamName={m.awayTeam} size={28} />
+                </div>
+                <div className="flex gap-1 text-xs">
+                  {m.scoreVerifiedAt && <span className="text-sky-300">✓</span>}
+                  {(m.highlightsUrl || m.highlightsEmbedUrl) && <span>🎬</span>}
+                  {m.aiRefreshedAt && <span>🤖</span>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 8. Missions */}
       {hook.missions && (

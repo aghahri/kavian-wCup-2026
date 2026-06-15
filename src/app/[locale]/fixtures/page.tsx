@@ -73,6 +73,10 @@ export default async function FixturesPage({ params }: PageProps) {
                 locale={locale}
                 userPrediction={predictionMap.get(match.id) ?? null}
                 showPredictLink
+                scoreVerifiedAt={match.scoreVerifiedAt}
+                highlightsUrl={match.highlightsUrl}
+                highlightsEmbedUrl={match.highlightsEmbedUrl}
+                aiRefreshedAt={match.aiRefreshedAt}
               />
             ))}
           </div>
@@ -98,6 +102,10 @@ export default async function FixturesPage({ params }: PageProps) {
                 isFinished={match.isFinished}
                 locale={locale}
                 userPrediction={predictionMap.get(match.id) ?? null}
+                scoreVerifiedAt={match.scoreVerifiedAt}
+                highlightsUrl={match.highlightsUrl}
+                highlightsEmbedUrl={match.highlightsEmbedUrl}
+                aiRefreshedAt={match.aiRefreshedAt}
               />
             ))}
           </div>
